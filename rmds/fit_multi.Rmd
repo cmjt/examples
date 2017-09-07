@@ -1,0 +1,92 @@
+---
+title: "Use of the fit.multi() function"
+author: "Charlotte M. Jones-Todd"
+date: "August 2017"
+output: md_document
+bibliography: ~/mega/my_styles/bib.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE)
+```
+
+### Function fit.multi()
+
+This function was written specifically for the analysis of the British Trust for Ornithology's (BTO) Garden Bird Feeding Survey (GBFS) data carried out by @bird. The model is given by,
+
+\begin{equation}\label{birds}
+  \begin{aligned}
+  \text{sparrowhawk} &\left\{ 
+  \begin{array}{l}
+    \text{logit}(p_{i1}) =   \mathbf{x_1}\{{\mathbf{s}_i,t}\}  \\ 
+    \text{log}(\mu_{i1}) = \beta_{1} \mathbf{x_1}\{{\mathbf{s}_i,t}\}, \\
+    \end{array}
+  \right.\\
+  \text{collared dove} &\left\{
+  \begin{array}{l}
+    \text{logit}(p_{i2}) =  \mathbf{x_2}\{{\mathbf{s}_i,t}\}  \\ 
+    \text{log}(\mu_{i2}) =  \beta_{2} \mathbf{x_2}\{{\mathbf{s}_i,t}\}, \\
+    \end{array}
+  \right.\\
+  \text{house sparrow} &\left\{
+  \begin{array}{l}
+    \text{logit}(p_{i3}) = \alpha +  \gamma_{1} \mathbf{x_1}\{{\mathbf{s}_i,t}\} + \gamma_{2} \mathbf{x_2}\{{\mathbf{s}_i,t}\} + \mathbf{x_3}\{{\mathbf{s}_i,t}\} \\
+\text{log}(\mu_{i3}) = \alpha_{y} + \gamma_{3} \mathbf{x_1}\{{\mathbf{s}_i,t}\} + \gamma_{4} \mathbf{x_2}\{{\mathbf{s}_i,t}\} + \beta_3\mathbf{x_3}\{{\mathbf{s}_i,t}\}.\\ 
+    \end{array}
+  \right.\\
+  \end{aligned}
+  \end{equation}
+  
+Each $\mathbf{x_j}\{{\mathbf{s}_i,t}\} (j=1,2,3)$ is a spatio-temporal random effect modelled by a SPDE model @lindgren2011explicit, which follows an AR(1) process over time with parameter $\rho_i$. Each $\alpha_{\cdot}$ is an intercept term for each component of the model referring to the house sparrows. The parameters $\beta_{\cdot}$ and $\gamma_{\cdot}$ are scaling @blangiardo2013spatial [~Chapter 8] or 'interaction' parameters to the spatio-temporal random fields of which they are coefficients. That is, each shared random field (i.e., a random field that appears in more than one linear predictor) represents the shared inter- or intra-species spatial auto-correlation over time. Each $\beta_{\cdot}$ or $\gamma_{\cdot}$ parameter represents the magnitude and direction of this spatial similarity. 
+
+
+This function returns an \textt{inla} object (@rue2009approximate) and takes the following arguments:
+
+* **locs** A matrix of BTO site locations
+* **mesh** Delauney triangulation of the UK (see @lindgren2011explicit)
+* **temp** years of GBFS 
+* **binary.response** list of length three. each referring to presence = 1, absence = 0 of the bird species
+ sparrowhawk, collared dove, house sparrow respectively
+* **density.response** list of length three. each referring to non-zero density of the bird species
+ sparrowhawk, collared dove, house sparrow respectively.
+* **family **a character vector of length two specifying the assumed likelihood of each species' response, by default
+ is rep(c("binomial","gamma"),3).
+* **control.time** (optional) supplied if the **temp** argument is given to fit a spatio-temporal model. This argument
+ controls the model and prior put on the hyperparameters of the model for the temporal component of the spatio-temporal
+ model. By default this is **list(model = 'ar1', param = list(theta = list(prior='pccor1', param = c(0, 0.9))))**
+ which is a pc.prior put on the rho coefficient of a AR(1) model with P(rho>0)=0.9.
+* **control.inla** a list which controls the fitting procedures INLA uses
+ by default this is **list(strategy='gaussian',int.strategy = 'eb')** for quick and dirty fitting.
+* **hyper** a list (of length 2) of lists of priors for each copy parameter. The first list has length 3
+ specifying the priors on the intra species interaction parameters, c(beta_1, beta_2, beta_3) (i.e., sparrowhawk, collared dove, house sparrow resp.).
+ the second element is of length 4 specifying the priors on the inter species interaction parameters
+ in order these refer to the parameters beta_z3, gamma_z3, beta_y3, and gamma_y3 (see model definition).
+ By default each is a N(0,10) (i.e.,  **list(theta=list(prior='normal', param=c(0,10)))**)
+* **control.compute** a list of fit statistics the user wants INLA to return. By default this
+ is **list(dic = TRUE, waic = TRUE,cpo = TRUE, config = TRUE)**.
+* **spde.new.params** by default this is NULL. If supplied must be a named list with components:
+ \code{sig0} - typical standard deviation to use pc priors for hyperparams of spde model, **Psig** -
+ prob for sigma of pc prior, **rho0** - typical range to use pc priors for hyperparams of spde model,
+ and  **Prho** - prob for rho of pc prior (see @martins2014penalising)
+* **verbose** Logical if **TRUE** model fit is output to screen.
+* **...** add inla options to speed up computation (i.e., by giving starting values from a previous model)
+
+
+```{r library and args,message=FALSE}
+library(lgcpSPDE)
+args(fit.multi)
+```
+
+To fit a basic model using default priors etc, the following code is all that is required (having specified **locs**, **mesh**, **temp**, **binary.response**, and **density.response** appropriately).
+
+
+```{r example,eval=FALSE}
+fit <- fit.multi(locs = locs, mesh = mesh, temp = temp, ## site locations, mesh, and time indecies
+                 binary.response = z.response, ## list of presence/absencse for species
+                 density.response = y.response) ## list of 'density' for species
+                 
+```
+
+
+
+# References 
