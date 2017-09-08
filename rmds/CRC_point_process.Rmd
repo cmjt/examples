@@ -2,46 +2,98 @@
 title: "CRC_point_process"
 author: "Charlotte M. Jones-Todd"
 date: "September 2017"
-output: html_document
+output: md_document
+bibliography: ~/mega/my_styles/bib.bib
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE,message = FALSE)
+## devtools::install_github("b-steve/palm") ## version not on CRAN exports parents
+## rmarkdown::render('CRC_point_process.Rmd', output_file = '~/Git/examples/CRC_point_process.html') 
 ```
 
 # Simulated examples
 
-Parameter estimation for the Thomas, Matérn, and void process is carried out by the R package **palm**, which is available on CRAN. All models are fitted using either the **fit.ns()** function, for NSPP, or the **fit.void()** function, for the void process.
+Parameter estimation for the Thomas, Matérn, and void process is carried out by the R package **palm**, which is available on CRAN. All models are fitted using either the **fit.ns()** function, for NSPP, or the **fit.void()** function, for the void process. 
+
+Below, code examples demonstrate using functionality of the **palm** package to simulate from and fit a two-dimensional point process. This is done for of each of the types mentioned above. The simulated data for each process are shown---parents are plotted at grey crosses and daughters by black dots---along with the fitted (solid lines) and empirical (dashed lines) Palm intensity functions. 
+
+Please note that parameters of the Palm intensity functions may differ, in name only, from the descriptions in @charlotte2017cancer.
 
 ```{r library,eval = TRUE,message=FALSE}
 library(palm)
 ```
 
+```{r functions,eval = TRUE, echo = FALSE}
+## A simple function that plots simulated data showing parent locations
+## its only argument is the simulated list object which must contain named
+## elements *points* and *parents*.
+plot.palm.sim <- function(x){
+  plot(x$points,pch = 20,xlab = "",ylab = "",xaxt = "n",yaxt = "n",asp = 1)
+  points(x$parents, pch = 4, col = "grey")
+}
+```
+
 ## Neyman-Scott point processes
+
+Cluster processes where unobserved parent points randomly generate daughters centered at their unobserved location. The spatial distribution of daughters may eiher follow a bivariate normal distribution (Thomas) or be uniformally distributed in a circle (Mat\'ern).
 
 ### Thomas process
 
+The Palm intensity function of a Thomas process may be characterised by the parameter vector $\boldsymbol{\theta} = (D,\lambda,\sigma)$. Here $D$ is the density of parents, $\lambda$ gives the expected number of daughters per parent, and $\sigma$ is the standard deviation of the bivariate normal distribution by which daughters are scattered around their parents.
+
 ```{r Thomas}
-lims <- rbind(c(0, 1),c(0,1))
-thomas <- sim.ns(c(D = 7, lambda = 8, sigma = 0.05), lims = lims)
-fit.thomas <- fit.ns(thomas$points,lims = lims, R = 0.5)
+lims <- rbind(c(0, 1),c(0,1)) ## 2D limits of domain (i.e., unit square)
+thomas <- sim.ns(c(D = 7, lambda = 8, sigma = 0.05), lims = lims) ## simulate a Thomas process
+fit.thomas <- fit.ns(thomas$points,lims = lims, R = 0.5) ## fit a Thomas process
+coef(fit.thomas)
 ```
+
+```{r plot thomas,echo = FALSE,fig.height=3}
+layout(matrix(c(1,2,2),nrow = 1))
+plot.palm.sim(thomas)
+plot(fit.thomas)
+```
+
 ### Matérn process
 
+The Palm intensity function of a Matérn process may be characterised by the parameter vector $\boldsymbol{\theta} = (D,\lambda,\tau)$. Here $D$ is the density of parents, $\lambda$ gives the expected number of daughters per parent, and $\tau$ is the radius of the sphere, centered at a parent location, within which daughters are uniformally scattered.
+
+
 ```{r Matern}
-lims <- rbind(c(0, 1),c(0,1))
-matern <- sim.ns(c(D = 7, lambda = 8, tau = 0.05), lims = lims,disp = "uniform")
-fit.matern <- fit.ns(matern$points,lims = lims, R = 0.5, disp = "uniform")
+lims <- rbind(c(0, 1),c(0,1)) ## 2D limits of domain (i.e., unit square)
+matern <- sim.ns(c(D = 7, lambda = 8, tau = 0.05), lims = lims,disp = "uniform") ## simulate a Matern process
+fit.matern <- fit.ns(matern$points,lims = lims, R = 0.5, disp = "uniform") ## fit a Matern process
+coef(fit.matern)
+```
+
+```{r plot matern,echo = FALSE,fig.height=3}
+layout(matrix(c(1,2,2),nrow = 1))
+plot.palm.sim(matern)
+plot(fit.matern)
 ```
 
 ## Void point process
 
+The Palm intensity function of a void process may be characterised by the parameter vector $\boldsymbol{\theta} = (D_c,D_p,\tau)$. Here $D_c$ is the density of children, $D_p$ is the density of parents, and $\tau$ is the radius of the voids centered at each parent. 
+
 ```{r void}
-lims <- rbind(c(0, 1),c(0,1))
-void <- sim.void(pars = c(Dc = 300, Dp = 10,tau = 0.075),lims = lims)
+lims <- rbind(c(0, 1),c(0,1)) ## 2D limits of domain (i.e., unit square)
+void <- sim.void(pars = c(Dc = 300, Dp = 10,tau = 0.075),lims = lims) ## simulate a void process
 fit.void <- fit.void(points = void$points, lims = lims, R = 0.5,
-                     bounds = list(Dc = c(250,350), Dp = c(8,12), tau = c(0,0.2)))
+                     bounds = list(Dc = c(280,320), Dp = c(8,12), tau = c(0,0.2))) ## fit a void process
+coef(fit.void)
 ```
+
+```{r plot void,echo = FALSE,fig.height=3}
+layout(matrix(c(1,2,2),nrow = 1))
+plot.palm.sim(void)
+plot(fit.void)
+```
+
+## Variance estimation
+
+Variance estimation is achieved via a parametric bootstrap, which can be carried out through the use of the **boot.palm()** function. For example, running **boot.palm(fit.thomas,N = 1000)** will perform 1000 bootstrap resamples of the fitted thomas process in order to estimate standard errors of the parameters.
 
 ```{r testing,eval = FALSE,echo = FALSE}
 library(gapski)
@@ -55,3 +107,6 @@ fit.mat.pois.2D <- fit.ns(points = points, lims = rbind(c(0, 1), c(0, 1)),R = 0.
 ```
 
 # CRC data
+
+
+# References
