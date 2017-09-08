@@ -2,16 +2,17 @@ Simulated examples
 ==================
 
 Parameter estimation for the Thomas, Matérn, and void process is carried
-out by the R package **palm**, which is available on CRAN. All models
-are fitted using either the **fit.ns()** function, for NSPP, or the
-**fit.void()** function, for the void process.
+out by the R package **palm** (B. C. Stevenson (2017)), which is
+available on CRAN. All models are fitted using either the **fit.ns()**
+function, for NSPP, or the **fit.void()** function, for the void
+process.
 
-Below, code examples demonstrate using functionality of the **palm**
-package to simulate from and fit a two-dimensional point process. This
-is done for of each of the types mentioned above. The simulated data for
-each process are shown---parents are plotted at grey crosses and
-daughters by black dots---along with the fitted (solid lines) and
-empirical (dashed lines) Palm intensity functions.
+Below, code examples demonstrate using functionality of the **palm** (B.
+C. Stevenson (2017)) package to simulate from and fit a two-dimensional
+point process. This is done for of each of the types mentioned above.
+The simulated data for each process are shown---parents are plotted at
+grey crosses and daughters by black dots---along with the fitted (solid
+lines) and empirical (dashed lines) Palm intensity functions.
 
 Please note that parameters of the Palm intensity functions may differ,
 in name only, from the descriptions in Jones-Todd et al. (2017).
@@ -40,10 +41,10 @@ daughters are scattered around their parents.
     fit.thomas <- fit.ns(thomas$points,lims = lims, R = 0.5) ## fit a Thomas process
     coef(fit.thomas)
 
-    ##          D     lambda      sigma 
-    ## 6.62561176 3.42535167 0.04298564
+    ##           D      lambda       sigma 
+    ## 10.34116799  4.83815432  0.03896552
 
-![](CRC_point_process_files/figure-markdown_strict/plot%20thomas-1.png)
+![](/home/charlotte/Git/examples/CRC_point_process_files/figure-markdown_strict/plot%20thomas-1.png)
 
 ### Matérn process
 
@@ -58,10 +59,10 @@ daughters are uniformally scattered.
     fit.matern <- fit.ns(matern$points,lims = lims, R = 0.5, disp = "uniform") ## fit a Matern process
     coef(fit.matern)
 
-    ##            D       lambda          tau 
-    ## 1.017443e-09 9.000000e+00 4.306985e-02
+    ##          D     lambda        tau 
+    ## 3.43483934 6.78890506 0.04931027
 
-![](CRC_point_process_files/figure-markdown_strict/plot%20matern-1.png)
+![](/home/charlotte/Git/examples/CRC_point_process_files/figure-markdown_strict/plot%20matern-1.png)
 
 Void point process
 ------------------
@@ -79,10 +80,10 @@ parent.
                          bounds = list(Dc = c(280,320), Dp = c(8,12), tau = c(0,0.2))) ## fit a void process
     coef(fit.void)
 
-    ##          Dp          Dc         tau 
-    ##  10.5896497 320.0000000   0.0803382
+    ##           Dp           Dc          tau 
+    ##  12.00000000 305.35979603   0.06703315
 
-![](CRC_point_process_files/figure-markdown_strict/plot%20void-1.png)
+![](/home/charlotte/Git/examples/CRC_point_process_files/figure-markdown_strict/plot%20void-1.png)
 
 Variance estimation
 -------------------
@@ -103,3 +104,6 @@ Jones-Todd, C. M, P Caie, J Illian, B. C Stevenson, Savage A, D
 Harrison, and J Bown. 2017. “Identifying Unusual Structures Inherent in
 Point Pattern Data and Its Application in Predicting Cancer Patient
 Survival.” *arXiv Preprint arXiv:1705.05938*.
+
+Stevenson, Ben C. 2017. *Palm: Fitting Point Process Models Using the
+Palm Likelihood*. <https://github.com/b-steve/palm>.

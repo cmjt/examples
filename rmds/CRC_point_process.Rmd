@@ -9,14 +9,14 @@ bibliography: ~/mega/my_styles/bib.bib
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE,message = FALSE)
 ## devtools::install_github("b-steve/palm") ## version not on CRAN exports parents
-## rmarkdown::render('CRC_point_process.Rmd', output_file = '~/Git/examples/CRC_point_process.html') 
+## rmarkdown::render('CRC_point_process.Rmd', output_file = '~/Git/examples/CRC_point_process.md') 
 ```
 
 # Simulated examples
 
-Parameter estimation for the Thomas, Matérn, and void process is carried out by the R package **palm**, which is available on CRAN. All models are fitted using either the **fit.ns()** function, for NSPP, or the **fit.void()** function, for the void process. 
+Parameter estimation for the Thomas, Matérn, and void process is carried out by the R package **palm** (@stevenson2017palm), which is available on CRAN. All models are fitted using either the **fit.ns()** function, for NSPP, or the **fit.void()** function, for the void process. 
 
-Below, code examples demonstrate using functionality of the **palm** package to simulate from and fit a two-dimensional point process. This is done for of each of the types mentioned above. The simulated data for each process are shown---parents are plotted at grey crosses and daughters by black dots---along with the fitted (solid lines) and empirical (dashed lines) Palm intensity functions. 
+Below, code examples demonstrate using functionality of the **palm** (@stevenson2017palm) package to simulate from and fit a two-dimensional point process. This is done for of each of the types mentioned above. The simulated data for each process are shown---parents are plotted at grey crosses and daughters by black dots---along with the fitted (solid lines) and empirical (dashed lines) Palm intensity functions. 
 
 Please note that parameters of the Palm intensity functions may differ, in name only, from the descriptions in @charlotte2017cancer.
 
