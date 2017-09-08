@@ -1,0 +1,57 @@
+---
+title: "CRC_point_process"
+author: "Charlotte M. Jones-Todd"
+date: "September 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Simulated examples
+
+Parameter estimation for the Thomas, Matérn, and void process is carried out by the R package **palm**, which is available on CRAN. All models are fitted using either the **fit.ns()** function, for NSPP, or the **fit.void()** function, for the void process.
+
+```{r library,eval = TRUE,message=FALSE}
+library(palm)
+```
+
+## Neyman-Scott point processes
+
+### Thomas process
+
+```{r Thomas}
+lims <- rbind(c(0, 1),c(0,1))
+thomas <- sim.ns(c(D = 7, lambda = 8, sigma = 0.05), lims = lims)
+fit.thomas <- fit.ns(thomas$points,lims = lims, R = 0.5)
+```
+### Matérn process
+
+```{r Matern}
+lims <- rbind(c(0, 1),c(0,1))
+matern <- sim.ns(c(D = 7, lambda = 8, tau = 0.05), lims = lims,disp = "uniform")
+fit.matern <- fit.ns(matern$points,lims = lims, R = 0.5, disp = "uniform")
+```
+
+## Void point process
+
+```{r void}
+lims <- rbind(c(0, 1),c(0,1))
+void <- sim.void(pars = c(Dc = 300, Dp = 10,tau = 0.075),lims = lims)
+fit.void <- fit.void(points = void$points, lims = lims, R = 0.5,
+                     bounds = list(Dc = c(250,350), Dp = c(8,12), tau = c(0,0.2)))
+```
+
+```{r testing,eval = FALSE,echo = FALSE}
+library(gapski)
+points<-sim.gap(pars=c(D=10,lambda=300,R=0.075))
+fit.gap<-fit.gap(points = points,lims = rbind(c(0,1),c(0,1)),trunc = 0.5,D.sv = 10,D.bounds=c(8,12))
+library(nspp)
+points <- sim.ns(pars=c(D=7, lims = rbind(c(0, 1), c(0, 1)), child.disp=0.05,child.par=8),
+                 dispersion="uniform",rchild=rpois)
+child.dist = list(mean = function(x) x, var = function(x) x,sv = 8, bounds = c(1e-6, nrow(points)))
+fit.mat.pois.2D <- fit.ns(points = points, lims = rbind(c(0, 1), c(0, 1)),R = 0.5, dispersion="uniform",child.dist = child.dist)
+```
+
+# CRC data
