@@ -36,15 +36,16 @@ parents, *λ* gives the expected number of daughters per parent, and *σ*
 is the standard deviation of the bivariate normal distribution by which
 daughters are scattered around their parents.
 
+    set.seed(1234)
     lims <- rbind(c(0, 1),c(0,1)) ## 2D limits of domain (i.e., unit square)
     thomas <- sim.ns(c(D = 7, lambda = 8, sigma = 0.05), lims = lims) ## simulate a Thomas process
     fit.thomas <- fit.ns(thomas$points,lims = lims, R = 0.5) ## fit a Thomas process
     coef(fit.thomas)
 
-    ##           D      lambda       sigma 
-    ## 10.34116799  4.83815432  0.03896552
+    ##          D     lambda      sigma 
+    ## 3.87798778 6.29007212 0.05679659
 
-![](/home/charlotte/Git/examples/CRC_point_process_files/figure-markdown_strict/plot%20thomas-1.png)
+![](CRC_point_process_files/figure-markdown_strict/plot%20thomas-1.png)
 
 ### Matérn process
 
@@ -54,15 +55,16 @@ parents, *λ* gives the expected number of daughters per parent, and *τ*
 is the radius of the sphere, centered at a parent location, within which
 daughters are uniformally scattered.
 
+    set.seed(2344)
     lims <- rbind(c(0, 1),c(0,1)) ## 2D limits of domain (i.e., unit square)
     matern <- sim.ns(c(D = 7, lambda = 8, tau = 0.05), lims = lims,disp = "uniform") ## simulate a Matern process
     fit.matern <- fit.ns(matern$points,lims = lims, R = 0.5, disp = "uniform") ## fit a Matern process
     coef(fit.matern)
 
     ##          D     lambda        tau 
-    ## 3.43483934 6.78890506 0.04931027
+    ## 5.43910354 5.05162971 0.04685375
 
-![](/home/charlotte/Git/examples/CRC_point_process_files/figure-markdown_strict/plot%20matern-1.png)
+![](CRC_point_process_files/figure-markdown_strict/plot%20matern-1.png)
 
 Void point process
 ------------------
@@ -74,6 +76,7 @@ the parameter vector
 density of parents, and *τ* is the radius of the voids centered at each
 parent.
 
+    set.seed(3454)
     lims <- rbind(c(0, 1),c(0,1)) ## 2D limits of domain (i.e., unit square)
     void <- sim.void(pars = c(Dc = 300, Dp = 10,tau = 0.075),lims = lims) ## simulate a void process
     fit.void <- fit.void(points = void$points, lims = lims, R = 0.5,
@@ -81,9 +84,9 @@ parent.
     coef(fit.void)
 
     ##           Dp           Dc          tau 
-    ##  12.00000000 305.35979603   0.06703315
+    ##   8.54355310 306.63597598   0.09059584
 
-![](/home/charlotte/Git/examples/CRC_point_process_files/figure-markdown_strict/plot%20void-1.png)
+![](CRC_point_process_files/figure-markdown_strict/plot%20void-1.png)
 
 Variance estimation
 -------------------
@@ -96,6 +99,84 @@ standard errors of the parameters.
 
 CRC data
 ========
+
+As per Jones-Todd et al. (2017) below is an digital image of a tissue
+section from a CRC patient (left hand plot of the Figure), the tumour
+and stroma structures of the tissue sections are coloured in red and
+green respectively. The far right plot of shows the point pattern formed
+by the tumour and stroma cell nuclei, black and grey respectively, of
+the same tissue section.
+
+![Illustration of the image analysis of one patient's slide which
+enables the pinpointing of nuclei. Left: Composite immunofluorescence
+digital image showing Tumour (red), Stroma (green) and all nuclei
+(blue). Middle: Image analysis mask overlay from automatic machine
+learnt segmentation of the digital image. Tumour (purple), stroma
+(turquoise), necrosis (yellow). Right: Point pattern formed by the
+nuclei of the tumour (black) and stroma (grey) cells shown in the
+previous two images.](CRC_point_process_files/cancer.png)
+
+    ## load libraries for doing things in parallel
+    library(foreach)
+    library(doMC)
+    ## change number of cores used
+    registerDoMC(2)
+
+Fit Thomas process
+------------------
+
+    ## Fit to list of tumour cells 
+    fit.thomas<-foreach(i = 1:length(Tu))%dopar%{
+        tryCatch({
+        fit.ns(points=points[[i]],lims=rbind(c(0,1),c(0,1)),R=Rt[i])
+        },error=function(e){cat("ERROR:",conditionMessage(e),"\n")})
+    }
+
+    ## now to stroma cells
+
+    fit.s.thomas<-foreach(i = 1:length(St))%dopar%{
+        tryCatch({
+        fit.ns(points=pointss[[i]],lims=rbind(c(0,1),c(0,1)),R=Rs[i])
+        },error=function(e){cat("ERROR:",conditionMessage(e),"\n")})
+    }
+
+Fit Matérn process
+------------------
+
+    ## Fit to list of tumour cells 
+    fit.matern<-foreach(i = 1:length(Tu))%dopar%{
+        tryCatch({
+        fit.ns(points=points[[i]],lims=rbind(c(0,1),c(0,1)),R=Rt[i],disp = "uniform")
+        },error=function(e){cat("ERROR:",conditionMessage(e),"\n")})
+    }
+
+    ## now to stroma cells
+
+    fit.s.matern<-foreach(i = 1:length(St))%dopar%{
+        tryCatch({
+        fit.ns(points=pointss[[i]],lims=rbind(c(0,1),c(0,1)),R=Rs[i],disp = "uniform")
+        },error=function(e){cat("ERROR:",conditionMessage(e),"\n")})
+    }
+
+Fit Void process
+----------------
+
+    ## Fit to list of tumour cells 
+    fit.void <- foreach(i = 1:length(Tu))%dopar%{
+        tryCatch({
+        fit.void(points=points[[i]],lims=rbind(c(0,1),c(0,1)),R=Rt[i],
+                 bounds = list(Dc = c(280,320), Dp = c(8,12), tau = c(0,0.2)))
+        },error=function(e){cat("ERROR:",conditionMessage(e),"\n")})
+    }
+
+    ## now to stroma cells
+
+    fit.s.void<-foreach(i = 1:length(St))%dopar%{
+        tryCatch({
+        fit.void(points=pointss[[i]],lims=rbind(c(0,1),c(0,1)),R=Rs[i],
+                 bounds = list(Dc = c(280,320), Dp = c(8,12), tau = c(0,0.2)))
+        },error=function(e){cat("ERROR:",conditionMessage(e),"\n")})
+    }
 
 References
 ==========
