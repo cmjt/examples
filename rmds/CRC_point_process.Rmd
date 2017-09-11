@@ -43,6 +43,7 @@ Cluster processes where unobserved parent points randomly generate daughters cen
 The Palm intensity function of a Thomas process may be characterised by the parameter vector $\boldsymbol{\theta} = (D,\lambda,\sigma)$. Here $D$ is the density of parents, $\lambda$ gives the expected number of daughters per parent, and $\sigma$ is the standard deviation of the bivariate normal distribution by which daughters are scattered around their parents.
 
 ```{r Thomas}
+set.seed(1234)
 lims <- rbind(c(0, 1),c(0,1)) ## 2D limits of domain (i.e., unit square)
 thomas <- sim.ns(c(D = 7, lambda = 8, sigma = 0.05), lims = lims) ## simulate a Thomas process
 fit.thomas <- fit.ns(thomas$points,lims = lims, R = 0.5) ## fit a Thomas process
@@ -61,6 +62,7 @@ The Palm intensity function of a Matérn process may be characterised by the par
 
 
 ```{r Matern}
+set.seed(2344)
 lims <- rbind(c(0, 1),c(0,1)) ## 2D limits of domain (i.e., unit square)
 matern <- sim.ns(c(D = 7, lambda = 8, tau = 0.05), lims = lims,disp = "uniform") ## simulate a Matern process
 fit.matern <- fit.ns(matern$points,lims = lims, R = 0.5, disp = "uniform") ## fit a Matern process
@@ -78,6 +80,7 @@ plot(fit.matern)
 The Palm intensity function of a void process may be characterised by the parameter vector $\boldsymbol{\theta} = (D_c,D_p,\tau)$. Here $D_c$ is the density of children, $D_p$ is the density of parents, and $\tau$ is the radius of the voids centered at each parent. 
 
 ```{r void}
+set.seed(3454)
 lims <- rbind(c(0, 1),c(0,1)) ## 2D limits of domain (i.e., unit square)
 void <- sim.void(pars = c(Dc = 300, Dp = 10,tau = 0.075),lims = lims) ## simulate a void process
 fit.void <- fit.void(points = void$points, lims = lims, R = 0.5,
@@ -108,5 +111,91 @@ fit.mat.pois.2D <- fit.ns(points = points, lims = rbind(c(0, 1), c(0, 1)),R = 0.
 
 # CRC data
 
+As per @charlotte2017cancer below is an digital image of a tissue section from a CRC patient (left hand plot of the Figure), the tumour and stroma structures of the tissue sections are coloured in red and green respectively. The far right plot of shows the point pattern formed by the tumour and stroma cell nuclei, black and grey respectively, of the same tissue section.
 
+![Illustration of the image analysis of one patient's slide which enables the pinpointing of nuclei. Left: Composite immunofluorescence digital image showing Tumour (red), Stroma (green) and all nuclei (blue). Middle: Image analysis mask overlay from automatic machine learnt segmentation of the digital image. Tumour (purple), stroma (turquoise), necrosis (yellow). Right: Point pattern formed by the nuclei of the tumour (black) and stroma (grey) cells shown in the previous two images.](CRC_point_process_files/cancer.png)
+
+
+```{r load data,echo = FALSE,eval = FALSE}
+load("~/mega/papers/cancer/cancerdata.RData")
+points<-list()
+for(i in 1:length(Tu)){
+    points[[i]]<-cbind(Tu[[i]]$inner_x,Tu[[i]]$inner_y)/2500
+}
+## stroma locs
+pointss<-list()
+for(i in 1:length(St)){
+    pointss[[i]]<-cbind(St[[i]]$inner_x,St[[i]]$inner_y)/2500
+}
+```
+
+```{r parallel}
+## load libraries for doing things in parallel
+library(foreach)
+library(doMC)
+## change number of cores used
+registerDoMC(2)
+```
+
+## Fit Thomas process
+
+```{r fit Thomas CRC,eval = FALSE}
+## Fit to list of tumour cells 
+fit.thomas<-foreach(i = 1:length(Tu))%dopar%{
+    tryCatch({
+    fit.ns(points=points[[i]],lims=rbind(c(0,1),c(0,1)),R=Rt[i])
+    },error=function(e){cat("ERROR:",conditionMessage(e),"\n")})
+}
+
+## now to stroma cells
+
+fit.s.thomas<-foreach(i = 1:length(St))%dopar%{
+    tryCatch({
+    fit.ns(points=pointss[[i]],lims=rbind(c(0,1),c(0,1)),R=Rs[i])
+    },error=function(e){cat("ERROR:",conditionMessage(e),"\n")})
+}
+
+```
+
+
+## Fit Matérn process
+
+```{r fit Matern CRC,eval = FALSE}
+## Fit to list of tumour cells 
+fit.matern<-foreach(i = 1:length(Tu))%dopar%{
+    tryCatch({
+    fit.ns(points=points[[i]],lims=rbind(c(0,1),c(0,1)),R=Rt[i],disp = "uniform")
+    },error=function(e){cat("ERROR:",conditionMessage(e),"\n")})
+}
+
+## now to stroma cells
+
+fit.s.matern<-foreach(i = 1:length(St))%dopar%{
+    tryCatch({
+    fit.ns(points=pointss[[i]],lims=rbind(c(0,1),c(0,1)),R=Rs[i],disp = "uniform")
+    },error=function(e){cat("ERROR:",conditionMessage(e),"\n")})
+}
+
+```
+
+## Fit Void process
+```{r fit Void CRC,eval = FALSE}
+## Fit to list of tumour cells 
+fit.void <- foreach(i = 1:length(Tu))%dopar%{
+    tryCatch({
+    fit.void(points=points[[i]],lims=rbind(c(0,1),c(0,1)),R=Rt[i],
+             bounds = list(Dc = c(280,320), Dp = c(8,12), tau = c(0,0.2)))
+    },error=function(e){cat("ERROR:",conditionMessage(e),"\n")})
+}
+
+## now to stroma cells
+
+fit.s.void<-foreach(i = 1:length(St))%dopar%{
+    tryCatch({
+    fit.void(points=pointss[[i]],lims=rbind(c(0,1),c(0,1)),R=Rs[i],
+             bounds = list(Dc = c(280,320), Dp = c(8,12), tau = c(0,0.2)))
+    },error=function(e){cat("ERROR:",conditionMessage(e),"\n")})
+}
+
+```
 # References
