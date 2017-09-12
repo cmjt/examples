@@ -114,69 +114,118 @@ digital image showing Tumour (red), Stroma (green) and all nuclei
 learnt segmentation of the digital image. Tumour (purple), stroma
 (turquoise), necrosis (yellow). Right: Point pattern formed by the
 nuclei of the tumour (black) and stroma (grey) cells shown in the
-previous two images.](CRC_point_process_files/cancer.png)
+previous two
+images.](CRC_point_process_files/figure-markdown_strict/cancer.png)
 
-    ## load libraries for doing things in parallel
-    library(foreach)
-    library(doMC)
-    ## change number of cores used
-    registerDoMC(2)
+    library(palm)
+
+    n <- length(Tu)
+    ## tumour locs
+    points<-list()
+    ## stroma locs
+    pointss<-list()
+    for(i in 1:n){
+        points[[i]] <- cbind(Tu[[i]]$inner_x,Tu[[i]]$inner_y)/2500
+        pointss[[i]] <- cbind(St[[i]]$inner_x,St[[i]]$inner_y)/2500
+    }
+
+
+    ## Set up results file
+    ## ID, grades, and mortality index
+    ID <- grade <- mort <- rep(NA,n)
+
+    for(i in 1:n){
+        grade[i]<-as.character(Tu[[i]]$Grade[1])
+        mort[i]<-Tu[[i]]$Mortality[1]
+        ID[i]<-Tu[[i]][1,1]
+    }
+
+    resultDF <- data.frame(ID = ID,grade = grade, mort = mort)
+
+    ## set up results columns
+    resultDF$thomas.T.D <- resultDF$thomas.T.lam <- resultDF$thomas.T.sig <- rep(NA,n)
+    resultDF$thomas.S.D <- resultDF$thomas.S.lam <- resultDF$thomas.S.sig <- rep(NA,n)
+    resultDF$matern.T.D <- resultDF$matern.T.lam <- resultDF$matern.T.tau <- rep(NA,n)
+    resultDF$matern.S.D <- resultDF$matern.S.lam <- resultDF$matern.S.tau <- rep(NA,n)
+    resultDF$void.T.Dp <- resultDF$void.T.Dc <- resultDF$void.T.tau <- rep(NA,n)
+    resultDF$void.S.Dp <- resultDF$void.S.Dc <- resultDF$void.S.tau <- rep(NA,n)
+     
+    ## write patient info out to a file
+    ## write.csv(resultDF,file = "resultsDF.csv",row.names = FALSE)
 
 Fit Thomas process
 ------------------
 
-    ## Fit to list of tumour cells 
-    fit.thomas<-foreach(i = 1:length(Tu))%dopar%{
-        tryCatch({
-        fit.ns(points=points[[i]],lims=rbind(c(0,1),c(0,1)),R=Rt[i])
-        },error=function(e){cat("ERROR:",conditionMessage(e),"\n")})
-    }
+    ### Tumour
 
-    ## now to stroma cells
-
-    fit.s.thomas<-foreach(i = 1:length(St))%dopar%{
-        tryCatch({
-        fit.ns(points=pointss[[i]],lims=rbind(c(0,1),c(0,1)),R=Rs[i])
-        },error=function(e){cat("ERROR:",conditionMessage(e),"\n")})
+    for(i in 1:n){
+        fit <- fit.ns(points=points[[i]],lims=rbind(c(0,1),c(0,1)),R=Rt[i])
+        resultDF$thomas.T.D[i] <- coef(fit)[1]
+        resultDF$thomas.T.lam[i] <- coef(fit)[2]
+        resultDF$thomas.T.sig[i] <- coef(fit)[3]
+        cat(paste("thomas T ", i),"\n")
     }
+    ### Stoma
+
+    for(i in 1:n){
+        fit <- fit.ns(points=pointss[[i]],lims=rbind(c(0,1),c(0,1)),R=Rs[i])
+        resultDF$thomas.S.D[i] <- coef(fit)[1]
+        resultDF$thomas.S.lam[i] <- coef(fit)[2]
+        resultDF$thomas.S.sig[i] <- coef(fit)[3]
+        cat(paste("thomas S ", i),"\n")
+    }
+    ## write patient info out to a file
+    ## write.csv(resultDF,file = "resultsDF.csv",row.names = FALSE)
 
 Fit Matérn process
 ------------------
 
-    ## Fit to list of tumour cells 
-    fit.matern<-foreach(i = 1:length(Tu))%dopar%{
-        tryCatch({
-        fit.ns(points=points[[i]],lims=rbind(c(0,1),c(0,1)),R=Rt[i],disp = "uniform")
-        },error=function(e){cat("ERROR:",conditionMessage(e),"\n")})
-    }
+    ### Tumour
 
-    ## now to stroma cells
-
-    fit.s.matern<-foreach(i = 1:length(St))%dopar%{
-        tryCatch({
-        fit.ns(points=pointss[[i]],lims=rbind(c(0,1),c(0,1)),R=Rs[i],disp = "uniform")
-        },error=function(e){cat("ERROR:",conditionMessage(e),"\n")})
+    for(i in 1:n){
+        fit <- fit.ns(points=points[[i]],lims=rbind(c(0,1),c(0,1)),R=Rt[i],disp = "uniform")
+        resultDF$matern.T.D[i] <- coef(fit)[1]
+        resultDF$matern.T.lam[i] <- coef(fit)[2]
+        resultDF$matern.T.tau[i] <- coef(fit)[3]
+        cat(paste("matern T ", i),"\n")
     }
+    ### Stoma
+
+    for(i in 1:n){
+        fit <- fit.ns(points=pointss[[i]],lims=rbind(c(0,1),c(0,1)),R=Rs[i],disp = "uniform")
+        resultDF$matern.S.D[i] <- coef(fit)[1]
+        resultDF$matern.S.lam[i] <- coef(fit)[2]
+        resultDF$matern.S.tau[i] <- coef(fit)[3]
+        cat(paste("matern S ", i),"\n")
+    }
+    ## write patient info out to a file
+    ## write.csv(resultDF,file = "resultsDF.csv",row.names = FALSE)
 
 Fit Void process
 ----------------
 
-    ## Fit to list of tumour cells 
-    fit.void <- foreach(i = 1:length(Tu))%dopar%{
-        tryCatch({
-        fit.void(points=points[[i]],lims=rbind(c(0,1),c(0,1)),R=Rt[i],
-                 bounds = list(Dc = c(280,320), Dp = c(8,12), tau = c(0,0.2)))
-        },error=function(e){cat("ERROR:",conditionMessage(e),"\n")})
-    }
+    ### Tumour
 
-    ## now to stroma cells
-
-    fit.s.void<-foreach(i = 1:length(St))%dopar%{
-        tryCatch({
-        fit.void(points=pointss[[i]],lims=rbind(c(0,1),c(0,1)),R=Rs[i],
-                 bounds = list(Dc = c(280,320), Dp = c(8,12), tau = c(0,0.2)))
-        },error=function(e){cat("ERROR:",conditionMessage(e),"\n")})
+    for(i in 1:n){
+        fit <- fit.void(points=points[[i]],lims=rbind(c(0,1),c(0,1)),R=Rt[i],
+                        bounds = list(Dc = c(nrow(points[[i]])-50,nrow(points[[i]])+50)))
+        resultDF$void.T.Dp[i] <- coef(fit)[1]
+        resultDF$void.T.Dc[i] <- coef(fit)[2]
+        resultDF$void.T.tau[i] <- coef(fit)[3]
+        cat(paste("void T ", i),"\n")
     }
+    ### Stoma
+
+    for(i in 1:n){
+        fit <- fit.void(points=pointss[[i]],lims=rbind(c(0,1),c(0,1)),R=Rs[i],
+                        bounds = list(Dc = c(nrow(pointss[[i]])-50,nrow(pointss[[i]])+50)))
+        resultDF$void.S.Dp[i] <- coef(fit)[1]
+        resultDF$void.S.Dc[i] <- coef(fit)[2]
+        resultDF$void.S.tau[i] <- coef(fit)[3]
+        cat(paste("void S ", i),"\n")
+    }
+    ## write patient info out to a file
+    ## write.csv(resultDF,file = "resultsDF.csv",row.names = FALSE)
 
 References
 ==========
