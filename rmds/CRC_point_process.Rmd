@@ -3,7 +3,7 @@ title: "CRC_point_process"
 author: "Charlotte M. Jones-Todd"
 date: "September 2017"
 output: md_document
-bibliography: ~/mega/my_styles/bib.bib
+bibliography: ~/MEGA/my_styles/bib.bib
 ---
 
 ```{r setup, include=FALSE}
@@ -121,8 +121,13 @@ load("~/mega/papers/cancer/cancerdata.RData")
 
 ```{r data setup,echo = TRUE,eval = FALSE}
 library(palm)
-
+## to allow parallel computing from R
+library(foreach)
+library(doSNOW)
+R <- 0.5
 n <- length(Tu)
+ncores <- 5
+
 ## tumour locs
 points<-list()
 ## stroma locs
@@ -155,6 +160,14 @@ resultDF$void.S.Dp <- resultDF$void.S.Dc <- resultDF$void.S.tau <- rep(NA,n)
  
 ## write patient info out to a file
 ## write.csv(resultDF,file = "resultsDF.csv",row.names = FALSE)
+
+## change number of cores used
+## create a cluster with ncores cores
+cl <- makeSOCKcluster(ncores)
+registerDoSNOW(cl)
+progress <-  function(x) cat(sprintf("T Thomas model %d \n", x))
+opts <- list(progress=progress)
+     
 ```
 
 ## Fit Thomas process
@@ -162,21 +175,27 @@ resultDF$void.S.Dp <- resultDF$void.S.Dc <- resultDF$void.S.tau <- rep(NA,n)
 ```{r fit Thomas CRC,eval = FALSE}
 ### Tumour
 
-for(i in 1:n){
-    fit <- fit.ns(points=points[[i]],lims=rbind(c(0,1),c(0,1)),R=Rt[i])
-    resultDF$thomas.T.D[i] <- coef(fit)[1]
-    resultDF$thomas.T.lam[i] <- coef(fit)[2]
-    resultDF$thomas.T.sig[i] <- coef(fit)[3]
-    cat(paste("thomas T ", i),"\n")
+### Tumour
+
+resultDF[,c(6,5,4)] <- foreach(i = 1:n, 
+              .combine = "rbind", 
+              .packages = "palm",
+              .options.snow=opts) %dopar% {
+    fit <- fit.ns(points=points[[i]],lims=rbind(c(0,1),c(0,1)),R = R,
+                  start = c(sigma = start[i,4], lambda = start[i,5], D = start[i,6]))
+    coef(fit)[1:3]
 }
 ### Stoma
+progress <-  function(x) cat(sprintf("S Thomas model %d \n", x))
+opts <- list(progress=progress)
 
-for(i in 1:n){
-    fit <- fit.ns(points=pointss[[i]],lims=rbind(c(0,1),c(0,1)),R=Rs[i])
-    resultDF$thomas.S.D[i] <- coef(fit)[1]
-    resultDF$thomas.S.lam[i] <- coef(fit)[2]
-    resultDF$thomas.S.sig[i] <- coef(fit)[3]
-    cat(paste("thomas S ", i),"\n")
+resultDF[,c(9,8,7)] <- foreach(i = 1:n, 
+              .combine = "rbind", 
+              .packages = "palm",
+              .options.snow=opts) %dopar% {
+    fit <- fit.ns(points=pointss[[i]],lims=rbind(c(0,1),c(0,1)),R = R,
+                  start = c(sigma = start[i,7], lambda = start[i,8], D = start[i,9]))
+    coef(fit)[1:3]
 }
 ## write patient info out to a file
 ## write.csv(resultDF,file = "resultsDF.csv",row.names = FALSE)
@@ -188,22 +207,31 @@ for(i in 1:n){
 
 ```{r fit Matern CRC,eval = FALSE}
 ### Tumour
+progress <-  function(x) cat(sprintf("T Matern model %d \n", x))
+opts <- list(progress=progress)
 
-for(i in 1:n){
-    fit <- fit.ns(points=points[[i]],lims=rbind(c(0,1),c(0,1)),R=Rt[i],disp = "uniform")
-    resultDF$matern.T.D[i] <- coef(fit)[1]
-    resultDF$matern.T.lam[i] <- coef(fit)[2]
-    resultDF$matern.T.tau[i] <- coef(fit)[3]
-    cat(paste("matern T ", i),"\n")
+resultDF[,c(12,11,10)] <- foreach(i = 1:n, 
+              .combine = "rbind", 
+              .packages = "palm",
+              .options.snow=opts) %dopar% {
+    fit <- fit.ns(points=points[[i]],lims=rbind(c(0,1),c(0,1)),R = R,disp = "uniform",
+                  start = c(tau = start[i,10], lambda = start[i,11], D = start[i,12]))
+    coef(fit)[1:3]
 }
+
+
 ### Stoma
 
-for(i in 1:n){
-    fit <- fit.ns(points=pointss[[i]],lims=rbind(c(0,1),c(0,1)),R=Rs[i],disp = "uniform")
-    resultDF$matern.S.D[i] <- coef(fit)[1]
-    resultDF$matern.S.lam[i] <- coef(fit)[2]
-    resultDF$matern.S.tau[i] <- coef(fit)[3]
-    cat(paste("matern S ", i),"\n")
+progress <-  function(x) cat(sprintf("S Matern model %d \n", x))
+opts <- list(progress=progress)
+
+resultDF[,c(15,14,13)] <- foreach(i = 1:n, 
+              .combine = "rbind", 
+              .packages = "palm",
+              .options.snow=opts) %dopar% {
+                  fit <- fit.ns(points=pointss[[i]],lims=rbind(c(0,1),c(0,1)),R = R,disp = "uniform",
+                                start = c(tau = start[i,13], lambda = start[i,14], D = start[i,15]))
+    coef(fit)[1:3]
 }
 ## write patient info out to a file
 ## write.csv(resultDF,file = "resultsDF.csv",row.names = FALSE)
@@ -215,25 +243,112 @@ for(i in 1:n){
 ```{r fit Void CRC,eval = FALSE}
 ### Tumour
 
-for(i in 1:n){
-    fit <- fit.void(points=points[[i]],lims=rbind(c(0,1),c(0,1)),R=Rt[i],
-                    bounds = list(Dc = c(nrow(points[[i]])-50,nrow(points[[i]])+50)))
-    resultDF$void.T.Dp[i] <- coef(fit)[1]
-    resultDF$void.T.Dc[i] <- coef(fit)[2]
-    resultDF$void.T.tau[i] <- coef(fit)[3]
-    cat(paste("void T ", i),"\n")
+progress <-  function(x) cat(sprintf("T void model %d \n", x))
+opts <- list(progress=progress)
+
+resultDF[,c(18,17,16)] <- foreach(i = 1:n, 
+              .combine = "rbind", 
+              .packages = "palm",
+              .options.snow=opts) %dopar% {
+                  fit <- fit.void(points=points[[i]],lims=rbind(c(0,1),c(0,1)),R = R,
+                                  bounds = list(Dp = c(0,70)),
+                                  start = c(tau = start[i,16], Dc = start[i,17], Dp = start[i,18]))
+    coef(fit)[1:3]
 }
+
+
 ### Stoma
 
-for(i in 1:n){
-    fit <- fit.void(points=pointss[[i]],lims=rbind(c(0,1),c(0,1)),R=Rs[i],
-                    bounds = list(Dc = c(nrow(pointss[[i]])-50,nrow(pointss[[i]])+50)))
-    resultDF$void.S.Dp[i] <- coef(fit)[1]
-    resultDF$void.S.Dc[i] <- coef(fit)[2]
-    resultDF$void.S.tau[i] <- coef(fit)[3]
-    cat(paste("void S ", i),"\n")
+progress <-  function(x) cat(sprintf("S void model %d \n", x))
+opts <- list(progress=progress)
+
+resultDF[,c(21,20,19)] <- foreach(i = 1:n, 
+              .combine = "rbind", 
+              .packages = "palm",
+              .options.snow=opts) %dopar% {
+                  fit <- fit.void(points=pointss[[i]],lims=rbind(c(0,1),c(0,1)),R = R,
+                                  bounds = list(Dp = c(0,70)),
+                                  start = c(tau = start[i,19], Dc = start[i,20], Dp = start[i,21]))
+    coef(fit)[1:3]
 }
 ## write patient info out to a file
 ## write.csv(resultDF,file = "resultsDF.csv",row.names = FALSE)
+```
+
+## Bootstrap functions
+
+```{r bootstrap,eval=FALSE,echo=TRUE}
+## read in csv of parameters (as above)
+df <- read.csv("resultsDF.csv")
+
+
+############# Heirarchical bootstrap
+resample <- function(dat, cluster, replace) {
+  # sample the clustering factor
+  cls <- sample(unique(dat[[cluster[1]]]), replace=replace[1])
+  # subset on the sampled clustering factors
+  sub <- lapply(cls, function(b) subset(dat, dat[[cluster[1]]]==b))
+  # join and return samples
+  do.call(rbind, sub)
+
+}
+
+## Function to do a heirarchical bootstrap for CRC data.
+## This function resamples based on a nested level (i.e., as each patient has multiple slides)
+## Arguments are, 1) data a named list of numeric vectors to be bootstrapped 2) nsim times based on the factor
+## vector 3) patient
+## By default the "median" of the bootstrapped resamples (again median resamples) for each list element (data) are returned
+## along with 95% quantiles
+
+bootstrap <- function(data, nsim, patient, value = "median"){
+    pb <- txtProgressBar(style = 3)
+    cluster = "patient"
+    boots <- list()
+    for(i in 1:length(data)){
+        dat <- data.frame(measurement = data[[i]],patient = patient)
+        boots[[i]] <- replicate(nsim, median(resample(dat, cluster, TRUE)$measurement,na.rm = TRUE))
+        setTxtProgressBar(pb,i)
+    }
+    close(pb)
+    val <- sapply(boots,value)
+    quantiles <- sapply(boots,quantile,c(0.025,0.975))
+    res <- rbind(val = val, quantiles)
+    colnames(res) <- names(data)
+    return(res)
+}
+
+## Function to chose the data to split, and the level at which to split to perform the heirarchical bootstrap above.
+## name should be a character vector of the data one wishes to bootstrap.
+## by a single character of the level at which to split (i.e., mortality of patient).
+## ID a single character specifying the name of the column in df whuch contains
+## the patient IDs.
+## df a matrix of data with columns named name, by and ID as above.
+## nsim an integer specifying the number of bootstraps to do.
+## the function returns a nested list of the output of the bootstrap function (above)
+## for each chosen level.
+
+fun <- function(name, by, ID, df, nsim){
+    d <- list()
+    for (i in 1:length(name)){
+        d[[i]] <-  split(df[[name[i]]],df[[by]])
+    }
+    pat <- split(df[[ID]],df[[by]])
+    names(d) <- name
+    boots <- list()
+    for (i in 1:length(d)){
+        boots[[i]] <- list()
+        for(j in 1:length(d[[i]])){
+            boots[[i]][[j]] <- bootstrap(data = d[[i]][j],nsim = nsim, patient = pat[[j]])
+        }
+    }
+    names(boots) <- name
+    boots
+}
+
+```
+For example to bootstrap the void process dispersion parameters for both the Tumour and Stroma nuclei, the following code should be run.
+```{r example, echo=TRUE,eval=FALSE}
+res <- fun(c("void.T.tau","void.S.tau"),"grade","ID", df,1000)
+
 ```
 # References
