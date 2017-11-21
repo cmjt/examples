@@ -11,3 +11,7 @@ Details the function used for the analysis of the Garden Bird Feeding Survey (GB
 ### CRC_point_process.md
 
 Details the functions used for colon rectal cancer patient data.
+
+### shared_stochastic.md
+
+Details the fitting of marked log-Gaussian Cox process models using an INLA-SPDE approach.
