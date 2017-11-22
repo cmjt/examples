@@ -7,8 +7,48 @@ output: md_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE,eval = FALSE)
+library(devtools)
+load_all("~/Git/lgcpSPDE")
+
 ```
 
-### Applications of marked LGCPs
+## Applications of marked LGCPs
 
+All funtions used below are available in the `lgcpSPDE` package [here](https://github.com/cmjt/lgcpSPDE), which can be installed by using `devtools::install_github("cmjt/lgcpSPDE")`.
 
+### Spatial dynamics of terrorism activity worldwide
+
+The terrorism data is available within the `lgcpSPDE` package and can be found by running `data(terrorism)`. In addition a `SpatialPolygonsDataFrame` of the world used in the construction of the mesh can be found by running `data(world)`.
+
+Terrorism activity, 2010--2016, is overlaid onto a map of the world below.
+
+```{r terrorism data},eval = TRUE,echo = FALSE}
+data(terrorism)
+data(world)
+plot(world)
+points(terrorism $longitude, terrorism$latitude, pch = 20)
+
+```
+
+```{r terrorism prep,echo = TRUE, eval = TRUE}
+head(terrorism)
+locs <- as.matrix(terrorism[,5:7])
+t.index <- (terrorism$iyear - min(terrorism$iyear)) + 1
+mark <- terrorism$fatal ## 1 = fatalities, 2 = no fatalities
+```
+
+```{r terrorism model fit, eval = FALSE, echo = TRUE}
+fit <- fit.marked.lgcp(mesh = mesh, locs = locs,t.index = t.index, 
+                   mark = mark, mark.family = "binomial",
+                   verbose=TRUE, 
+                   hyper = list(theta = list(prior = "normal", param = c(0, 10))),
+                   link = 2) ## use quick strategy first
+
+T.fit.imp <- fit.marked.lgcp(mesh = mesh, locs = locs, t.index = t.index, 
+                             mark = mark, mark.family = "binomial",
+                             verbose=TRUE, 
+                             hyper = list(theta = list(prior = "normal", param = c(0, 10))),
+                             control.mode = list(result = fit,restart = TRUE),
+                             control.inla = list(strategy='laplace'),
+                             link = 2)## improve using starting values from first model
+```
