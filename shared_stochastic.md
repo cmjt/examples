@@ -31,6 +31,9 @@ below.
     t.index <- (terrorism$iyear - min(terrorism$iyear)) + 1
     mark <- terrorism$fatal ## 1 = fatalities, 2 = no fatalities
 
+    mesh <- make.mesh(locs = locs,mesh.pars = c(max = 3, min = 0.03,cutoff = 0.03),
+                      sphere = TRUE,
+                      spatial.polygon = world) ##over sphere with land constraint
     fit <- fit.marked.lgcp(mesh = mesh, locs = locs,t.index = t.index, 
                        mark = mark, mark.family = "binomial",
                        verbose=TRUE, 
