@@ -47,3 +47,13 @@ below.
                                  control.mode = list(result = fit,restart = TRUE),
                                  control.inla = list(strategy='laplace'),
                                  link = 2)## improve using starting values from first model
+
+### Analysis of eye movement data
+
+The eye movement data is not supplied within the `lgcpSPDE` package as
+we do not have permission to distribute. The data refer to the data
+collected by Nathalie Guyader & Anne Gu'erin (GIPSA-lab, Grenoble,
+France), and made available through the [RSS 2015
+Challenge](https://rsschallenge.wordpress.com/the-2015-challenge/).
+However, in this section we will describe the data and detail the
+fitting of a spatiotemporal LGCP.
