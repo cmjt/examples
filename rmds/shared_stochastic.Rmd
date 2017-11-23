@@ -59,4 +59,11 @@ T.fit.imp <- fit.marked.lgcp(mesh = mesh, locs = locs, t.index = t.index,
 
 ### Analysis of eye movement data
 
-The eye movement data is not supplied within the `lgcpSPDE` package as we do not have permission to distribute. The data refer to the data collected by  Nathalie Guyader & Anne  Gu\'erin (GIPSA-lab, Grenoble, France), and made available through the [RSS 2015 Challenge](https://rsschallenge.wordpress.com/the-2015-challenge/). However, in this section we will describe the data and detail the fitting of a spatiotemporal LGCP.
+```{r eye_move,echo = FALSE, eval = TRUE}
+load("~/MEGA/papers/spatial/spatial_data.RData")
+```
+The eye movement data is not supplied within the `lgcpSPDE` package as we do not have permission to distribute. The data refer to the data collected by  Nathalie Guyader & Anne  Guérin (GIPSA-lab, Grenoble, France), and made available through the [RSS 2015 Challenge](https://rsschallenge.wordpress.com/the-2015-challenge/). However, in this section we will describe the data and detail the fitting of a spatiotemporal LGCP.
+
+```{r summary,eval = TRUE, echo = TRUE}
+head(eye_movement)
+```

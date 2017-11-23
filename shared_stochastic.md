@@ -52,8 +52,25 @@ below.
 
 The eye movement data is not supplied within the `lgcpSPDE` package as
 we do not have permission to distribute. The data refer to the data
-collected by Nathalie Guyader & Anne Gu'erin (GIPSA-lab, Grenoble,
+collected by Nathalie Guyader & Anne Guérin (GIPSA-lab, Grenoble,
 France), and made available through the [RSS 2015
 Challenge](https://rsschallenge.wordpress.com/the-2015-challenge/).
 However, in this section we will describe the data and detail the
 fitting of a spatiotemporal LGCP.
+
+    head(eye_movement)
+
+    ##          fx     fy duration fixation subject condition image    format
+    ## 4273  -86.1  -11.0      150        1      n1    normal     1 landscape
+    ## 4274 -146.3 -140.9      347        2      n1    normal     1 landscape
+    ## 4275  283.0   56.1      163        3      n1    normal     1 landscape
+    ## 4276   16.6  228.9      207        4      n1    normal     1 landscape
+    ## 4277   80.4  228.6      130        5      n1    normal     1 landscape
+    ## 4278 -207.4  222.2      294        6      n1    normal     1 landscape
+    ##             sl        ta
+    ## 4273        NA        NA
+    ## 4274 143.17140 204.86458
+    ## 4275 472.34256  65.35025
+    ## 4276 317.53551 302.96940
+    ## 4277  63.80071  90.26941
+    ## 4278 287.87115 268.72609
