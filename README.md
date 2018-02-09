@@ -15,3 +15,7 @@ Details the functions used for colon rectal cancer patient data.
 ### shared_stochastic.md
 
 Details the fitting of marked log-Gaussian Cox process models using an INLA-SPDE approach.
+
+### Ecography_ESD.md
+
+Details for the fitting of the joint marked spatio-temporal LGCP model in "Estimating species distribution in highly dynamic populations using point process models" Redondo, S., et al. 
