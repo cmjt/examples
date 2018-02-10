@@ -1,7 +1,7 @@
 ---
 title: "shared"
 author: "cmjt"
-date: "22 November 2017"
+date: "January 2018"
 output: md_document
 ---
 
@@ -57,6 +57,8 @@ T.fit.imp <- fit.marked.lgcp(mesh = mesh, locs = locs, t.index = t.index,
 ```
 
 
+
+
 ### Analysis of eye movement data
 
 ```{r eye_move,echo = FALSE, eval = TRUE}
@@ -66,4 +68,25 @@ The eye movement data is not supplied within the `lgcpSPDE` package as we do not
 
 ```{r summary,eval = TRUE, echo = TRUE}
 head(eye_movement)
+```
+
+```{r eye movement,echo = TRUE, eval = TRUE}
+mesh <- inla.mesh.2d(loc = as.matrix(eye_movement[,1:2]),max.edge = 50,cutoff = 30)
+plot(mesh)
+```
+
+
+```{r model, eval = FALSE, echo = TRUE}
+t.index <- as.numeric(cut(eye_movement[,4],7))
+locs <- as.matrix(eye_movement[,1:2])
+mark <- eye_movement[,9]
+
+fit <- fit.marked.lgcp(mesh = mesh, locs = locs, t.index = t.index,
+                       mark = mark, mark.family = "gamma",
+                       prior.range = c(500,0.5),
+                       prior.sigma = c(5,0.05),
+                       verbose = TRUE, 
+                       hyper = list(theta = list(prior = "normal", param = c(0, 10))),
+                       link = 2) 
+
 ```

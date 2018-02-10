@@ -74,3 +74,20 @@ fitting of a spatiotemporal LGCP.
     ## 4276 317.53551 302.96940
     ## 4277  63.80071  90.26941
     ## 4278 287.87115 268.72609
+
+    mesh <- inla.mesh.2d(loc = as.matrix(eye_movement[,1:2]),max.edge = 50,cutoff = 30)
+    plot(mesh)
+
+![](shared_stochastic_files/figure-markdown_strict/eye%20movement-1.png)
+
+    t.index <- as.numeric(cut(eye_movement[,4],7))
+    locs <- as.matrix(eye_movement[,1:2])
+    mark <- eye_movement[,9]
+
+    fit <- fit.marked.lgcp(mesh = mesh, locs = locs, t.index = t.index,
+                           mark = mark, mark.family = "gamma",
+                           prior.range = c(500,0.5),
+                           prior.sigma = c(5,0.05),
+                           verbose = TRUE, 
+                           hyper = list(theta = list(prior = "normal", param = c(0, 10))),
+                           link = 2)
