@@ -1,7 +1,7 @@
 This supplementary material provides the code used to fit the
 spatio-temporal marked log-Gaussian Cox process discussed in *Estimating
 species distribution in highly dynamic populations using point process
-models* submitted to *Ecography*. There is an onlie version of this
+models* submitted to *Ecography*. There is an online version of this
 tutorial also avaiable
 [here](https://github.com/cmjt/examples/blob/master/Ecography_ESD.md).
 
@@ -27,7 +27,7 @@ and binomial mark vector.
     ## get coordinates (latitude and longitude of wetland
     ## locations)
     locs <- cbind(wetland[, 14], wetland[, 15])
-    plot(locs, main = "Wetland locations in England and Wales", axes = FALSE, 
+    plot(locs, main = "Wetland locations in England", axes = FALSE, 
         xlab = "", ylab = "")
 
 ![](Ecography_ESD_files/figure-markdown_strict/data-1.png)
