@@ -10,7 +10,7 @@ output: md_document
 knitr::opts_chunk$set(echo = TRUE, eval = TRUE,tidy = TRUE, message = FALSE,tidy.opts=list(blank=FALSE, width.cutoff=60))
 ```
 
-This supplementary material provides the code used to fit the spatio-temporal marked log-Gaussian Cox process discussed in \textit{Estimating species distribution in highly dynamic populations using point process models} submitted to \textit{Ecography}. There is an onlie version of this tutorial also avaiable [here](https://github.com/cmjt/examples/blob/master/Ecography_ESD.md).
+This supplementary material provides the code used to fit the spatio-temporal marked log-Gaussian Cox process discussed in *Estimating species distribution in highly dynamic populations using point process models* submitted to *Ecography*. There is an onlie version of this tutorial also avaiable [here](https://github.com/cmjt/examples/blob/master/Ecography_ESD.md).
 
 Please note that the data cannot be supplied along with the supplementary material due to the protection status of the species. However, if readers do wish to access the data please contact [Andrea Soriano Redondo](A.Soriano-Redondo@exeter.ac.uk).
 

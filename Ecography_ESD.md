@@ -1,6 +1,8 @@
 This supplementary material provides the code used to fit the
-spatio-temporal marked log-Gaussian Cox process discussed in submitted
-to . There is an onlie version of this tutorial also avaiable
+spatio-temporal marked log-Gaussian Cox process discussed in *Estimating
+species distribution in highly dynamic populations using point process
+models* submitted to *Ecography*. There is an onlie version of this
+tutorial also avaiable
 [here](https://github.com/cmjt/examples/blob/master/Ecography_ESD.md).
 
 Please note that the data cannot be supplied along with the
