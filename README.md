@@ -20,4 +20,4 @@ Details the fitting of marked log-Gaussian Cox process models using an INLA-SPDE
 
 Details for the fitting of the joint marked spatio-temporal LGCP model in "Estimating species distribution in highly dynamic populations using point process models" Redondo, S., et al.
 
-Please note that the model described can be fitted using the function *fit.marked.lgcp()* provided in the *R* package *lgcpSPDE*, which is available [here](https://github.com/cmjt/lgcpSPDE).
+Please note that the model described can be fitted using the function **fit.marked.lgcp()** provided in the **R** package **lgcpSPDE**, which is available [here](https://github.com/cmjt/lgcpSPDE).
