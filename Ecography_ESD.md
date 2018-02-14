@@ -2,7 +2,7 @@ This supplementary material provides the code used to fit the
 spatio-temporal marked log-Gaussian Cox process discussed in *Estimating
 species distribution in highly dynamic populations using point process
 models* submitted to *Ecography*. There is an online version of this
-tutorial also avaiable
+tutorial also available
 [here](https://github.com/cmjt/examples/blob/master/Ecography_ESD.md).
 
 Please note that the data cannot be supplied along with the
@@ -10,7 +10,7 @@ supplementary material due to the protection status of the species.
 However, if readers do wish to access the data please contact [Andrea
 Soriano Redondo](A.Soriano-Redondo@exeter.ac.uk).
 
-The refered to below is a data frame of 65676 rows and 20 columns. Each
+The referred to below is a data frame of 65676 rows and 20 columns. Each
 row corresponds to an observation, and the columns picked out for the
 analysis correspond to the latitude and longitude of wetland locations,
 sum of breeding crane pairs on each wetland, wetland density, wetland
@@ -20,6 +20,30 @@ area, a wetland density buffer and urban density buffer.
     library(INLA)
     ## load data.
     wetland <- read.csv("Wetland.csv")
+    ## First six rows
+    head(wetland)
+
+    ##   X.6 Wetland_Identity X.5 Wet_density_buf_NoSea X.4 X.3    X.2    X.1
+    ## 1   1               35   1            0.01085769 129 106 139052 527826
+    ## 2   2               35   2            0.01085769 105 121  48380 527816
+    ## 3   3               35   3            0.01085769 106 111 139052 527826
+    ## 4   4               35   4            0.01085769 107 119  66516 527818
+    ## 5   5               35   5            0.01085769 108 123 139052 527826
+    ## 6   6               35   6            0.01085769 109 116  84649 527820
+    ##        X    IDID  ID   Area Perimeter      Lon      Lat Year SUM_FLEDGED
+    ## 1 527820 35_2015 138 349375      9450 -5.20802 49.96074 2015           0
+    ## 2 527810 35_2005 138 349375      9450 -5.20802 49.96074 2005           0
+    ## 3 527820 35_2015 138 349375      9450 -5.20802 49.96074 2022          NA
+    ## 4 527812 35_2007 138 349375      9450 -5.20802 49.96074 2007           0
+    ## 5 527820 35_2015 138 349375      9450 -5.20802 49.96074 2020          NA
+    ## 6 527814 35_2009 138 349375      9450 -5.20802 49.96074 2009           0
+    ##   SUM_PAIR Wet_density_buf Urb_density_buf_NoSea
+    ## 1        0     0.003040471            0.01907853
+    ## 2        0     0.003040471            0.01907853
+    ## 3       NA     0.003040471            0.01907853
+    ## 4        0     0.003040471            0.01907853
+    ## 5       NA     0.003040471            0.01907853
+    ## 6        0     0.003040471            0.01907853
 
 Code section below extracts wetland coordinates and creates time index
 and binomial mark vector.
@@ -70,11 +94,19 @@ fitting
     cov.effects <- m[[1]]
     cov.form <- m[[2]]
 
-The mesh is a requirement of the SPDE model fot the latent fields.
+The mesh is a requirement of the SPDE model for the latent fields. Using
+different values of **cutoff** and **max.edge** in the
+**inla.mesh.2d()** function will change the resolution of the mesh. For
+further details please see the
+[SPDE-tutorial](http://www.r-inla.org/examples/tutorials/spde-tutorial)
+on the r-inla website.
 
-    ## make mesh for SPDE model
+    ## exmaple mesh for SPDE model
     mesh <- inla.mesh.2d(loc = locs, cutoff = 0.6, max.edge = c(0.2, 
         2))
+    plot(mesh)
+
+![](Ecography_ESD_files/figure-markdown_strict/mesh-1.png)
 
 This section sets priors used for hyperparameters of the model and sets
 up latent structures.
@@ -90,11 +122,11 @@ up latent structures.
     n <- nrow(locs)
     ## number of mesh nodes
     nv <- mesh$n
-    temp <- t.index  ## temporal dimentson
+    temp <- t.index  ## temporal dimension
     k <- (mesh.t <- inla.mesh.1d(temp))$n  ## number of groups
     ## the response for the point pattern locations
     y.pp <- rep(0:1, c(k * nv, n))
-    ## create projection matrix for loacations
+    ## create projection matrix for locations
     Ast <- inla.spde.make.A(mesh = mesh, loc = locs, group = temp, 
         n.group = k)
     ## effect for LGCP used for point pattern
@@ -125,8 +157,8 @@ joint response model.
     ## combine data stacks
     stack <- inla.stack(stk.pp, stk.mark)
 
-Finally the formula is defined and is called to fit the joibt
-spatio-temporalmarked log-Gaussian Coz process model.
+Finally the formula is defined and is called to fit the joint
+spatio-temporal marked log-Gaussian Cox process model.
 
     ## formula for model as given by equation X in article
     formula <- y ~ 0 + Area_sc + PA_ratio_sc + Wet_density_nosea_sc + 
