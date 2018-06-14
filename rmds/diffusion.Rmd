@@ -2,7 +2,7 @@
 title: "Supplementary material: Detecting Subnational Diffusion Processes of Lethal Terrorism: Global Study, 2010-2016"
 author: ""
 date: "May 2018"
-output: html_document
+output: md_document
 ---
 
 ```{r setup, include=FALSE}
@@ -11,13 +11,85 @@ knitr::opts_chunk$set(echo = TRUE, eval = TRUE,tidy = TRUE, message = FALSE,tidy
 
 This supplementary material illustrate the fitting of the models discussed in *Detecting Subnational Diffusion Processes of Lethal Terrorism: Global Study, 2010-2016* using a subset of the data discussed in that article. There is an online version of this tutorial available [here](https://github.com/cmjt/examples/blob/master/diffusion.md).
 
+Fitting code available either in the package \texttt{lgcpSPDE} available [here](https://github.com/cmjt/lgcpSPDE) or functions are provided in the supplementary [functions.r](https://github.com/cmjt/examples/blob/master/materials/functions.r) file (as per [Python, A., et al, 2018](https://rss.onlinelibrary.wiley.com/doi/abs/10.1111/rssa.12384)).
+
+Hotspot evaluation code was written by [A. Python](andre.python@bdi.ox.ac.uk).
+
 ```{r libraries}
 ## load required packages
+require(INLA) ## model fitting
+require(spatstat) ## functions for spatial data
 require(sp)
-require(INLA)
-require(spatstat)
 require(GISTools)
 require(raster)
 require(rgeos)
 require(maptools)
+```
+
+```{r load, eval = FALSE, echo = TRUE}
+## example data supplied with this material
+load("pnas_example.RData")
+## fiting functions supplied with this material
+source("functions.r")
+```
+
+```{r load data, eval = TRUE, echo = FALSE}
+## example data supplied with this material
+load("../materials/pnas_example.RData")
+## fiting functions supplied with this material
+source("../materials/functions.r")
+load("../materials/AFG-PAKfit.RData")
+INLA:::inla.dynload.workaround() ## fsmesher problem
+```
+
+## Model fitting example
+
+```{r show data}
+head(example.df) ## data for Afghanistan and Pakistan
+plot(sp) ## plot Afghanistan and Pakistan boundry
+points(example.df$longitude, example.df$latitude,pch = 20) ## centroid points
+
+```
+
+```{r fit model, eval = FALSE}
+## make mesh; this is an example the mesh only
+bdry <- inla.sp2segment(sp)
+bdry$loc <- inla.mesh.map(bdry$loc, projection = "longlat",inverse = TRUE) ## 
+mesh <- inla.mesh.2d(boundary = bdry, max.edge = c(4,7)/900,cutoff = 4/900)
+## set up model info
+locs <- as.matrix(example.df[,1:3])
+response <- example.df$total
+covariates <- data.frame(population = example.df$population, time.to.city = example.df$time.to.city,
+                         luminosity = example.df$luminosity)
+t.idx <- example.df$year.idx
+country.idx <- example.df$country.idx
+## call fitting function
+fit <- geo.fit(mesh = mesh, locs = locs, response = response,covariates = covariates,
+                control.time = list(model = "rw1",param = list(theta = list(prior = "pc.prec",param=c(1,0.01)))),
+                temp = t.idx,verbose = TRUE,family = "poisson",
+                non.linear = list(random.effect = country.idx, model = "iid"))
+
+
+```
+
+## Finding "Hotspots"
+
+```{r hotspots}
+k <- 2#number of years
+resol <- c(1440,720)
+fields <- find.fields(fit, mesh, n.t = k,spatial.polygon = sp,dims = resol) 
+sdfields <- find.fields(fit, sd = TRUE, mesh, n.t = k,spatial.polygon = sp,dims = resol) 
+proj = inla.mesh.projector(mesh, projection = "longlat",dims=resol)
+```
+
+### Plotting the random fields
+
+```{r, fig.width=10,fig.height=5}
+## Random fields
+par(mfrow = c(1,2), mar = c(1,2,2,1)) ## plot random effects on link scale
+image(proj$x,proj$y,fields[[1]][[1]],ylim = c(20,40),xlim = c(50,90),xlab = "", ylab = "", axes = FALSE,main = "2014")
+plot(sp,add = TRUE)
+image(proj$x,proj$y,fields[[1]][[2]],ylim = c(20,40),xlim = c(50,90),xlab = "", ylab = "", axes = FALSE, main = "2015")
+plot(sp,add = TRUE)
+
 ```
