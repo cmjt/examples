@@ -1,0 +1,76 @@
+---
+title: "Supplementary material: Estimating species distribution in highly dynamic populations using point process models"
+author: ""
+date: ""
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE,tidy = TRUE, message = FALSE,tidy.opts=list(blank=FALSE, width.cutoff=60))
+```
+
+This supplementary material provides the code used to fit the spatio-temporal marked log-Gaussian Cox process discussed in *Estimating species distribution in highly dynamic populations using point process models* submitted to *Ecography*. There is an online version of this tutorial also available [here](https://github.com/cmjt/examples/blob/master/species_distribution.md).
+
+Please note that the data used in the artivle cannot be supplied along with the supplementary material due to the protection status of the species (if readers do wish to access the data please contact [Andrea Soriano Redondo](A.Soriano-Redondo@exeter.ac.uk)). However, we supply data simulated from the model to illustrate the methodology detailed in the article. Alongside this we supply functionality so that the readers can fit the models discussed; the procedure for this is outlined below.
+
+The functionality is provided in the suite of R functions, **lgcpSPDE**, available [here](https://github.com/cmjt/lgcpSPDE); to install the **lgcpSPDE** package from GitHub run 
+```{r, eval = FALSE}
+devtools::install_github("cmjt/lgcpSPDE") 
+```
+
+## The data
+
+The simulated data, contained in the R object **cranes**, is included in the **lgcpSPDE** package. This dataframe has 5052 wetland observations and 10 variables:
+
+- **Wetland_Identity*,** a numeric wetland ID
+- **Lon**, longitude epicentre location of wetland
+- **Lat**, latitude epicentre location of wetland
+- **Area**, Area of wetland in $m^2$
+- **Perimiter**, Wetland perimiter in $m$
+- **Wet_density_buf_NoSea**, Surrounding wetland density
+- **Urb_density_buf_NoSea**, Surrouning urban density
+- **Year**, Year of observation, i.e., 2014 or 2015
+- **mark**, A simulated binary mark indicating presence of a Grus Grus breeding pair at the wetland
+- **PA_ratio**, Wetland perimiter to area ratio
+
+
+```{r data}
+library(lgcpSPDE)
+data(cranes)
+str(cranes) ## to see further details run ?cranes
+```
+
+```{r plot, echo = FALSE,fig.width = 10,fig.cap = "Epicentre locations of wetlands in England (i.e., potentially suitable habitats for Grus Grus). Black plotting characters indicate the wetlands that were (simulated to be) occupied by a breeding pair in 2014 an/or 2015."}
+library(ggplot2)
+UK <- map_data(map = "world", region = "UK")
+UK <- subset(UK, UK$subregion == "Great Britain")
+plot(UK[,1:2],type = "l",axes = FALSE,xlab = "", ylab = "",asp = 1)
+col <- ifelse(cranes$mark == 1, "black","grey")
+points(cranes$Lon,cranes$Lat,pch = 20,col = col,cex = 0.5)
+legend("top",bty = "n",pch = 20, col = c("black","grey"),legend = c("occupied","un-occupied"),cex = 0.5)
+```
+
+## Modelling
+
+```{r setup data}
+locs <- as.matrix(cranes[,1:2]) ## matrix of wetland epicentre locations
+mark <- cranes$mark ## Simulated crane breeding pair presence as binomial mark (0 absent/ 1 present)
+table(mark,cranes$Year) ## 10 occupied sites in 2014, 20 in 2015
+mark.family <- "binomial" 
+t.index <- (cranes$Year-min(cranes$Year)) + 1 ## create year index
+## Create data frame of scaled covariates
+covariates <- data.frame(Area_sc = scale(cranes$Area), PA_ratio_sc = scale(cranes$PA_ratio),
+                          Wet_density_nosea_sc = scale(cranes$Wet_density_buf_NoSea),
+                          Urb_density_nosea_sc = scale(cranes$Urb_density_buf_NoSea))
+```
+
+
+
+```{r fitting function,eval = FALSE}
+fit <- fit.marked.lgcp(mesh = mesh, locs = locs, t.index = t.index,covariates = covariates,mark = mark,
+                         mark.family = mark.family,
+                         verbose = TRUE,
+                         prior.range = c(4,0.5),
+                         prior.sigma = c(1,0.05))
+```
