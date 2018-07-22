@@ -112,15 +112,23 @@ To fit the model discussed in *Estimating species distribution in highly dynamic
 
 
 ```{r fitting function,eval = TRUE}
-fit <- fit.marked.lgcp(mesh = mesh, locs = locs, t.index = t.index,covariates = covariates,mark = mark,
+fit <- fit.marked.lgcp(mesh = mesh, locs = locs, t.index = t.index, covariates = covariates, mark = mark,
                          mark.family = mark.family,
                          prior.range = c(4,0.5),
-                         prior.sigma = c(1,0.05))
+                         prior.sigma = c(1,0.05),
+                       pp.int = TRUE, mark.int = TRUE)
 ```
 
 ### Model inference
 
 ```{r summary}
-summary(fit)$fixed[,1:6] ## print out some summary information for fixed effects
-summary(fit)$hyperpar[,1:6] ## print out some summary information for parameters of the latent fields
-fields <- find.fields(fit, mesh, n.t = 2) ## extract the random fields from the model object over the n.t = 2 years.
+summary(fit)$fixed[,1:5] ## print out some summary information for fixed effects
+summary(fit)$hyperpar[,1:5] ## print out some summary information for parameters of the latent fields
+fields <- find.fields(fit, mesh, n.t = 2) ## extract the random fields from the model object over the n.t = 2 years (Returns a list of matricies)
+```
+
+```{r plots, echo = FALSE,fig.width = 10, fig.cap = "Posterior means of the random fields on the link scales. Left plot shows the random field of the point process intensity. Right plot shows the mark specific random field once the spatial structure of the wetlands, and fixed effects, have been accounted for."}
+par(mfrow = c(1,2))
+image.plot(fields[[1]][[1]], axes = FALSE)
+image.plot(fields[[2]][[1]], axes = FALSE)
+```
