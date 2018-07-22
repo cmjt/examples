@@ -1,2 +1,4 @@
 *.html
 materials/AFG-PAKfit.RData
+rmds/*.html
+rmds/*.pdf
