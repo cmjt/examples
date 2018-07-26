@@ -7,9 +7,9 @@ library(doParallel)
 ## change to FALSE if you don't want the quick eb and gaussian inla strategies to be used
 quick <- TRUE; if(quick){control.inla <- list(int.strategy = "eb",strategy = "gaussian",diagonal = 100)};if(!quick){ control.inla <- list(diagonal = 100)}
 ## control coarseness of the projections
-dims <- c(5000,5000)
+dims <- c(2000,2000)
 ## vector of countries we are interested in
-countries <- c("AFG","IRQ","IND","PHL","RUS","LBY","PAK","NGA","IRN","SYR","TUR","YEM","UKR")
+countries <- c("AFG","IRQ")#,"IND","PHL","RUS","LBY","PAK","NGA","IRN","SYR","TUR","YEM","UKR")
 # list of spatial polygons of above countries
 sps <- sapply(countries, function(x) world[world$sov_a3 == x,])
 ## create mesh of the world projected onto the unit sphere
@@ -67,7 +67,7 @@ registerDoParallel(cl) ## register that you want to use cores number of cores...
 ## which year we want to predict
 pred.year <- 2016
 ##################################################
-pred.fields <- foreach(i = 1:length(countries),.combine = rbind, .packages = "lgcpSPDE",
+pred.fits <- foreach(i = 1:length(countries),.combine = list, .packages = "lgcpSPDE",
                        .errorhandling = "pass") %dopar%
     {
         data <- terrorism_data
@@ -86,19 +86,22 @@ pred.fields <- foreach(i = 1:length(countries),.combine = rbind, .packages = "lg
                                                 param = list(theta = list(prior = "pc.prec",param=c(1,0.01)))),
                             temp = time,family = "poisson", sig0 = 0.2, rho0 = 0.01,Prho = 0.9,
                             control.compute = list(waic = TRUE,config = TRUE),
-                            control.inla = control.inla,
-                            num.threads = 1) ## inla tries to parallelise anyway
-        ## extract "out-of-sample" fields for each country (model is worldwide)
-        tmp.pred.fields <- find.fields(pred.fit, mesh = mesh, n.t = length(table(time)),
-                                       spatial.polygon = sps[[i]],dims = dims)
-       
+                            control.inla = control.inla)
     }
 
 stopCluster(cl) ## stop cluster
 
+## extract list of fields, subset to each country's spatial polygon.
+
+pred.fields <- list()
+for(i in 1:length(pred.fits)){
+    pred.fields[[i]] <- find.fields(pred.fits[[id]], mesh = mesh, n.t = length(table(time)),
+                                    spatial.polygon = sps[[id]],dims = dims)
+}
+
+
 ## name lists
-names(sps) <- names(pred.fields) <- countries
-save(pred.fields, file = "pred_fields.RData")
+names(sps) <- names(pred.fields) <- names(pred.fits) <- countries
 
 ### plotting loop for each countries in- and out-of sample prediction
 pdf(file = "pnas_predictions.pdf", paper='A4r',width = 11,height = 8)
@@ -111,7 +114,7 @@ for(i in names(pred.fields)){
     title(paste(i,"---",pred.year, "spatial effect for in-sample prediction"),
                cex.main = 0.7)
     plot(sps[[i]], add = TRUE)
-    image.plot(proj$x,proj$y,pred.fields[[i]][[7]],axes  = FALSE, xlab = "",ylab = "",col = cols,
+    image.plot(proj$x,proj$y,pred.fields[[i]][[1]][[7]],axes  = FALSE, xlab = "",ylab = "",col = cols,
                xlim = sps[[i]]@bbox[1,],ylim = sps[[i]]@bbox[2,])
     title(paste(i,"---",pred.year, "spatial effect for out-of-sample prediction"),
                cex.main = 0.7)
