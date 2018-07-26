@@ -95,8 +95,8 @@ stopCluster(cl) ## stop cluster
 
 pred.fields <- list()
 for(i in 1:length(pred.fits)){
-    pred.fields[[i]] <- find.fields(pred.fits[[id]], mesh = mesh, n.t = length(table(time)),
-                                    spatial.polygon = sps[[id]],dims = dims)
+    pred.fields[[i]] <- find.fields(pred.fits[[i]], mesh = mesh, n.t = length(table(time)),
+                                    spatial.polygon = sps[[i]],dims = dims)
 }
 
 
