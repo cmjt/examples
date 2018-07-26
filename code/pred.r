@@ -44,7 +44,7 @@ fit <- geo.fit(mesh = mesh, locs = locs, response = data$total,
 
 ## extract "in-sample" fields for the whole world
 fit.fields <- find.fields(fit, mesh = mesh, n.t = length(table(time)),
-                              spatial.polygon = world,dims = c(1000,1000))
+                              spatial.polygon = world,dims = dims)
 proj <- inla.mesh.projector(mesh,dims = dims)## set up projection
 ## plot these "in-sample" fields worldwide
 cols <- topo.colors(100) ## colours for plotting
