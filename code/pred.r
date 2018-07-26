@@ -15,7 +15,7 @@ sps <- sapply(countries, function(x) world[world$sov_a3 == x,])
 ## create mesh of the world projected onto the unit sphere
 bdry <- inla.sp2segment(world)
 bdry$loc <- inla.mesh.map(bdry$loc, projection = "longlat",inverse = TRUE)
-mesh <- inla.mesh.2d(boundary = bdry, max.edge = c(3,20)/180,cutoff = 5/180) ## plot(mesh) to vizualise
+mesh <- inla.mesh.2d(boundary = bdry, max.edge = c(6,100)/180,cutoff = 6/180) ## plot(mesh) to vizualise
 
 ## in-sample predicition (simply just one model worldwide)
 ##################################################
@@ -98,7 +98,7 @@ stopCluster(cl) ## stop cluster
 
 ## name lists
 names(sps) <- names(pred.fields) <- countries
-
+save(pred.fields, file = "pred_fields.RData")
 
 ### plotting loop for each countries in- and out-of sample prediction
 pdf(file = "pnas_predictions.pdf", paper='A4r',width = 11,height = 8)
