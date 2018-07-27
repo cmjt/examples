@@ -67,7 +67,7 @@ registerDoParallel(cl) ## register that you want to use cores number of cores...
 ## which year we want to predict
 pred.year <- 2016
 ##################################################
-pred.fields <- foreach(i = 1:length(countries), .packages = "lgcpSPDE",
+pred.fields <- foreach(i = 1:length(countries), .combine = rbind,.packages = "lgcpSPDE",
                        .errorhandling = "pass") %dopar%
     {
         data <- terrorism_data
