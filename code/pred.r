@@ -33,29 +33,29 @@ time <- data$iyear - min(data$iyear) + 1
 ## this gives starting values for the model (see setting quick above)
 ## fit for in sample predictions
 ## openmp.strategy = "huge" for inla parralelization
-fit <- geo.fit(mesh = mesh, locs = locs, response = data$total,
-               covariates = covariates,
-               control.time = list(model = "rw1",
-                                   param = list(theta = list(prior = "pc.prec",
-                                                             param=c(1,0.01)))),
-               temp = time,family = "poisson", sig0 = 0.2, rho0 = 0.01,Prho = 0.9,
-               control.compute = list(waic = TRUE,config = TRUE,openmp.strategy = "huge"), 
-               control.inla = control.inla)
+## fit <- geo.fit(mesh = mesh, locs = locs, response = data$total,
+##                covariates = covariates,
+##                control.time = list(model = "rw1",
+##                                    param = list(theta = list(prior = "pc.prec",
+##                                                              param=c(1,0.01)))),
+##                temp = time,family = "poisson", sig0 = 0.2, rho0 = 0.01,Prho = 0.9,
+##                control.compute = list(waic = TRUE,config = TRUE,openmp.strategy = "huge"), 
+##                control.inla = control.inla)
 
-## extract "in-sample" fields for the whole world
-fit.fields <- find.fields(fit, mesh = mesh, n.t = length(table(time)),
-                              spatial.polygon = world,dims = dims)
-proj <- inla.mesh.projector(mesh,dims = dims)## set up projection
-## plot these "in-sample" fields worldwide
-cols <- topo.colors(100) ## colours for plotting
-pdf("insamples_fields_world.pdf", paper='A4r',width = 11,height = 8)
-for(i in 1:length(fit.fields[[1]])){
-    image.plot(proj$x,proj$y,fit.fields[[1]][[i]],
-               axes  = FALSE, xlab = "",ylab = "",col = cols,
-               main = paste("In-sample estimated spatial effect---",names(table(data$iyear))[i],sep = ""))
-    plot(world, add = TRUE)
-}
-dev.off()
+## ## extract "in-sample" fields for the whole world
+## fit.fields <- find.fields(fit, mesh = mesh, n.t = length(table(time)),
+##                               spatial.polygon = world,dims = dims)
+## proj <- inla.mesh.projector(mesh,dims = dims)## set up projection
+## ## plot these "in-sample" fields worldwide
+## cols <- topo.colors(100) ## colours for plotting
+## pdf("insamples_fields_world.pdf", paper='A4r',width = 11,height = 8)
+## for(i in 1:length(fit.fields[[1]])){
+##     image.plot(proj$x,proj$y,fit.fields[[1]][[i]],
+##                axes  = FALSE, xlab = "",ylab = "",col = cols,
+##                main = paste("In-sample estimated spatial effect---",names(table(data$iyear))[i],sep = ""))
+##     plot(world, add = TRUE)
+## }
+## dev.off()
     
 
 ## out-of-sample prediction
@@ -67,7 +67,7 @@ registerDoParallel(cl) ## register that you want to use cores number of cores...
 ## which year we want to predict
 pred.year <- 2016
 ##################################################
-pred.fits <- foreach(i = 1:length(countries),.combine = rbind, .packages = "lgcpSPDE",
+pred.fits <- foreach(i = 1:length(countries), .packages = "lgcpSPDE",
                        .errorhandling = "pass") %dopar%
     {
         data <- terrorism_data
