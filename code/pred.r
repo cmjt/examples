@@ -7,9 +7,9 @@ library(doParallel)
 ## change to FALSE if you don't want the quick eb and gaussian inla strategies to be used
 quick <- TRUE; if(quick){control.inla <- list(int.strategy = "eb",strategy = "gaussian",diagonal = 100)};if(!quick){ control.inla <- list(diagonal = 100)}
 ## control coarseness of the projections
-dims <- c(2000,2000)
+dims <- c(3000,3000)
 ## vector of countries we are interested in
-countries <- c("AFG","IRQ")#,"IND","PHL","RUS","LBY","PAK","NGA","IRN","SYR","TUR","YEM","UKR")
+countries <- c("AFG","IRQ","IND","PHL","RUS","LBY","PAK","NGA","IRN","SYR","TUR","YEM","UKR")
 # list of spatial polygons of above countries
 sps <- sapply(countries, function(x) world[world$sov_a3 == x,])
 ## create mesh of the world projected onto the unit sphere
