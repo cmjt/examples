@@ -7,7 +7,7 @@ library(doParallel)
 ## change to FALSE if you don't want the quick eb and gaussian inla strategies to be used
 quick <- TRUE; if(quick){control.inla <- list(int.strategy = "eb",strategy = "gaussian",diagonal = 100)};if(!quick){ control.inla <- list(diagonal = 100)}
 ## control coarseness of the projections
-dims <- c(3000,3000)
+dims <- c(2000,2000)
 ## vector of countries we are interested in
 countries <- c("AFG","IRQ","IND","PHL","RUS","LBY","PAK","NGA","IRN","SYR","TUR","YEM","UKR")
 # list of spatial polygons of above countries
@@ -67,7 +67,7 @@ registerDoParallel(cl) ## register that you want to use cores number of cores...
 ## which year we want to predict
 pred.year <- 2016
 ##################################################
-pred.fits <- foreach(i = 1:length(countries), .packages = "lgcpSPDE",
+pred.fields <- foreach(i = 1:length(countries), .packages = "lgcpSPDE",
                        .errorhandling = "pass") %dopar%
     {
         data <- terrorism_data
@@ -87,21 +87,17 @@ pred.fits <- foreach(i = 1:length(countries), .packages = "lgcpSPDE",
                             temp = time,family = "poisson", sig0 = 0.2, rho0 = 0.01,Prho = 0.9,
                             control.compute = list(waic = TRUE,config = TRUE),
                             control.inla = control.inla)
+        pred.fields.tmp <- find.fields(pred.fits, mesh = mesh, n.t = length(table(time)),
+                                       spatial.polygon = sps[[i]],dims = dims)
     }
 
 stopCluster(cl) ## stop cluster
 
-## extract list of fields, subset to each country's spatial polygon.
 
-pred.fields <- list()
-for(i in 1:length(pred.fits)){
-    pred.fields[[i]] <- find.fields(pred.fits[[i]], mesh = mesh, n.t = length(table(time)),
-                                    spatial.polygon = sps[[i]],dims = dims)
-}
 
 
 ## name lists
-names(sps) <- names(pred.fields) <- names(pred.fits) <- countries
+names(sps) <- names(pred.fields) <- countries
 
 ### plotting loop for each countries in- and out-of sample prediction
 pdf(file = "pnas_predictions.pdf", paper='A4r',width = 11,height = 8)
