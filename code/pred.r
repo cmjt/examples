@@ -110,7 +110,7 @@ for(i in names(pred.fields)){
     title(paste(i,"---",pred.year, "spatial effect for in-sample prediction"),
                cex.main = 0.7)
     plot(sps[[i]], add = TRUE)
-    image.plot(proj$x,proj$y,pred.fields[[i]][[1]][[7]],axes  = FALSE, xlab = "",ylab = "",col = cols,
+    image.plot(proj$x,proj$y,pred.fields[[i]][[7]],axes  = FALSE, xlab = "",ylab = "",col = cols,
                xlim = sps[[i]]@bbox[1,],ylim = sps[[i]]@bbox[2,])
     title(paste(i,"---",pred.year, "spatial effect for out-of-sample prediction"),
                cex.main = 0.7)
