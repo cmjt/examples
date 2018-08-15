@@ -20,7 +20,7 @@ mesh <- inla.mesh.2d(boundary = bdry, max.edge = c(6,100)/180,cutoff = 6/180) ##
 ## in-sample predicition (simply just one model worldwide)
 ##################################################
 
-data <- terrorism_data
+data <- terrorism_aggregate
 ## Create a named data frame of covariates
 covariates <- data.frame(population = data$pop, time.to.city = data$tt,
                          luminosity = data$lum)
@@ -117,3 +117,4 @@ for(i in names(pred.fields)){
     plot(sps[[i]], add = TRUE)
 }
 dev.off()
+
