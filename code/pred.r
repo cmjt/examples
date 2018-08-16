@@ -28,6 +28,7 @@ covariates <- data.frame(population = data$pop, time.to.city = data$tt,
 locs <- cbind(data$x.coord, data$y.coord, data$z.coord)
 ## create temporal indecies
 time <- data$iyear - min(data$iyear) + 1
+
 ## First This is a quick fit, set control.inla = list(diagonal = 100) if you want a more robust fit,
 ## or include the argument control.mode = list(result = fit.sv, restart = TRUE) where fit.sv is this first fit
 ## this gives starting values for the model (see setting quick above)
@@ -65,12 +66,12 @@ cl <- makeCluster(cores[1]-1) ## so as to not overload your computer use one few
 registerDoParallel(cl) ## register that you want to use cores number of cores...
 ##############################################
 ## which year we want to predict
-pred.year <- 2016
+pred.year <- 2017
 ##################################################
 pred.fields <- foreach(i = 1:length(countries), .combine = rbind,.packages = "lgcpSPDE",
                        .errorhandling = "pass") %dopar%
     {
-        data <- terrorism_data
+        data <- terrorism_aggregate
         ## Create a named data frame of covariates
         covariates <- data.frame(population = data$pop, time.to.city = data$tt,
                                  luminosity = data$lum)
@@ -105,12 +106,12 @@ for(i in names(pred.fields)){
     par(mfrow = c(1,2),mar = c(0,0,2,6))
     tmp.fld <- find.fields(fit, mesh = mesh, n.t = length(table(time)),
                               spatial.polygon = sps[[i]],dims = dims)
-    image.plot(proj$x,proj$y,tmp.fld[[1]][[7]],axes  = FALSE, xlab = "",ylab = "",col = cols,
+    image.plot(proj$x,proj$y,tmp.fld[[1]][[8]],axes  = FALSE, xlab = "",ylab = "",col = cols,
                xlim = sps[[i]]@bbox[1,],ylim = sps[[i]]@bbox[2,])
     title(paste(i,"---",pred.year, "spatial effect for in-sample prediction"),
                cex.main = 0.7)
     plot(sps[[i]], add = TRUE)
-    image.plot(proj$x,proj$y,pred.fields[[i]][[7]],axes  = FALSE, xlab = "",ylab = "",col = cols,
+    image.plot(proj$x,proj$y,pred.fields[[i]][[8]],axes  = FALSE, xlab = "",ylab = "",col = cols,
                xlim = sps[[i]]@bbox[1,],ylim = sps[[i]]@bbox[2,])
     title(paste(i,"---",pred.year, "spatial effect for out-of-sample prediction"),
                cex.main = 0.7)
