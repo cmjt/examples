@@ -10,12 +10,16 @@ quick <- TRUE; if(quick){control.inla <- list(int.strategy = "eb",strategy = "ga
 dims <- c(2000,2000)
 ## vector of countries we are interested in
 countries <- c("AFG","IRQ","IND","PHL","RUS","LBY","PAK","NGA","IRN","SYR","TUR","YEM","UKR")
+## full country names for data
+countries.full <- c("Afghanistan","Iraq","India"," Philippines","Russia","Libya",
+                    "Pakistan","Nigeria","Iran","Syria","Turkey","Yemen","Ukraine")
 # list of spatial polygons of above countries
 sps <- sapply(countries, function(x) world[world$sov_a3 == x,])
 ## create mesh of the world projected onto the unit sphere
 bdry <- inla.sp2segment(world)
 bdry$loc <- inla.mesh.map(bdry$loc, projection = "longlat",inverse = TRUE)
 mesh <- inla.mesh.2d(boundary = bdry, max.edge = c(6,100)/180,cutoff = 6/180) ## plot(mesh) to vizualise
+
 
 ## in-sample predicition (simply just one model worldwide)
 ##################################################
@@ -68,7 +72,7 @@ registerDoParallel(cl) ## register that you want to use cores number of cores...
 ## which year we want to predict
 pred.year <- 2017
 ##################################################
-pred.fields <- foreach(i = 1:length(countries), .combine = rbind,.packages = "lgcpSPDE",
+pred.fit <- foreach(i = 1:length(countries), .combine = list,.packages = "lgcpSPDE",
                        .errorhandling = "pass") %dopar%
     {
         data <- terrorism_aggregate
@@ -81,15 +85,15 @@ pred.fields <- foreach(i = 1:length(countries), .combine = rbind,.packages = "lg
         time <- data$iyear - min(data$iyear) + 1
         ## fit for out of sample predictions
         ## Put NA values at pred locations
-        data$total[data$iyear == pred.year & data$country == countries[i]] <- NA
-        pred.fit <- geo.fit(mesh = mesh, locs = locs, response = data$total,covariates = covariates,
-                            control.time = list(model = "rw1",
-                                                param = list(theta = list(prior = "pc.prec",param=c(1,0.01)))),
-                            temp = time,family = "poisson", sig0 = 0.2, rho0 = 0.01,Prho = 0.9,
-                            control.compute = list(waic = TRUE,config = TRUE),
-                            control.inla = control.inla)
-        pred.fields.tmp <- find.fields(pred.fit, mesh = mesh, n.t = length(table(time)),
-                                       spatial.polygon = sps[[i]],dims = dims)
+        data$total[data$iyear == pred.year & data$country == countries.full[i]] <- NA
+        pred.fit.tmp <- geo.fit(mesh = mesh, locs = locs, response = data$total,covariates = covariates,
+                                control.time = list(model = "rw1",
+                                                    param = list(theta = list(prior = "pc.prec",param=c(1,0.01)))),
+                                temp = time,family = "poisson", sig0 = 0.2, rho0 = 0.01,Prho = 0.9,
+                                control.compute = list(waic = TRUE,config = TRUE),
+                                control.inla = control.inla)
+        ## pred.fields.tmp <- find.fields(pred.fit, mesh = mesh, n.t = length(table(time)),
+        ##                                spatial.polygon = sps[[i]],dims = dims)
     }
 
 stopCluster(cl) ## stop cluster
