@@ -7,7 +7,7 @@ library(doParallel)
 ## change to FALSE if you don't want the quick eb and gaussian inla strategies to be used
 quick <- TRUE; if(quick){control.inla <- list(int.strategy = "eb",strategy = "gaussian",diagonal = 100)};if(!quick){ control.inla <- list(diagonal = 100)}
 ## control coarseness of the projections
-dims <- c(2000,2000)
+dims <- c(200,200)
 ## vector of countries we are interested in
 countries <- c("AFG","IRQ","IND","PHL","RUS","LBY","PAK","NGA","IRN","SYR","TUR","YEM","UKR")
 ## full country names for data
@@ -65,44 +65,39 @@ dev.off()
 
 ## out-of-sample prediction
 #########################################################
-cores <- detectCores() ## to detect the number of cores your computer has
-cl <- makeCluster(cores[1]-1) ## so as to not overload your computer use one fewer of its cores
-registerDoParallel(cl) ## register that you want to use cores number of cores...
+## cores <- detectCores() ## to detect the number of cores your computer has
+## cl <- makeCluster(cores[1]-1) ## so as to not overload your computer use one fewer of its cores
+## registerDoParallel(cl) 
+## register that you want to use cores number of cores...
 ##############################################
 ## which year we want to predict
 pred.year <- 2017
+pred.fit <- list()
 ##################################################
-pred.fit <- foreach(i = 1:length(countries), .combine = rbind,.packages = "lgcpSPDE",
-                       .errorhandling = "pass") %dopar%
-    {
-        data <- terrorism_aggregate
-        ## Create a named data frame of covariates
-        covariates <- data.frame(population = data$pop, time.to.city = data$tt,
-                                 luminosity = data$lum)
-        ## x, y, z locations (latitude and longitude projected onto the unit sphere)
-        locs <- cbind(data$x.coord, data$y.coord, data$z.coord)
-        ## create temporal indecies
-        time <- data$iyear - min(data$iyear) + 1
-        ## fit for out of sample predictions
-        ## Put NA values at pred locations
-        data$total[data$iyear == pred.year & data$country == countries.full[i]] <- NA
-        pred.fit.tmp <- geo.fit(mesh = mesh, locs = locs, response = data$total,covariates = covariates,
-                                control.time = list(model = "rw1",
-                                                    param = list(theta = list(prior = "pc.prec",param=c(1,0.01)))),
-                                temp = time,family = "poisson", sig0 = 0.2, rho0 = 0.01,Prho = 0.9,
-                                control.compute = list(waic = TRUE,config = TRUE),
-                                control.inla = control.inla)
-        ## pred.fields.tmp <- find.fields(pred.fit, mesh = mesh, n.t = length(table(time)),
-        ##                                spatial.polygon = sps[[i]],dims = dims)
-    }
+for(i in 1:length(countries)){
+    data <- terrorism_aggregate
+    ## Create a named data frame of covariates
+    covariates <- data.frame(population = data$pop, time.to.city = data$tt,
+                             luminosity = data$lum)
+    ## x, y, z locations (latitude and longitude projected onto the unit sphere)
+    locs <- cbind(data$x.coord, data$y.coord, data$z.coord)
+    ## create temporal indecies
+    time <- data$iyear - min(data$iyear) + 1
+    ## fit for out of sample predictions
+    ## Put NA values at pred locations
+    data$total[data$iyear == pred.year & data$country == countries.full[i]] <- NA
+    pred.fit[[i]] <- geo.fit(mesh = mesh, locs = locs, response = data$total,covariates = covariates,
+                             control.time = list(model = "rw1",
+                                                 param = list(theta = list(prior = "pc.prec",param=c(1,0.01)))),
+                             temp = time,family = "poisson", sig0 = 0.2, rho0 = 0.01,Prho = 0.9,
+                             control.compute = list(waic = TRUE,config = TRUE),
+                             control.inla = control.inla)
+}
 
-stopCluster(cl) ## stop cluster
-
-
-
+## stopCluster(cl) ## stop cluster
 
 ## name lists
-names(sps) <- names(pred.fields) <- countries
+names(sps) <- names(pred.fit) <- countries.full
 
 ### plotting loop for each countries in- and out-of sample prediction
 pdf(file = "pnas_predictions.pdf", paper='A4r',width = 11,height = 8)
