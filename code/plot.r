@@ -111,10 +111,18 @@ for(i in 1:length(fit.fields[[1]])){
     plot(world, add = TRUE)
 }
 dev.off()
+###
+## clean up memory before next bit of plotting (not the most efficient way of doing this)
+tmp <- tempfile(tmpdir =getwd(),fileext = ".RData")
+save(mesh,time,dims,sps,pred.fit,countries.full,proj,coefs,pops,tt,lums,pred.fields, file = tmp)
+rm(list = ls())
+gc()
+load(tmp)
+unlink(tmp)
 #### Plots for comparision
 ## extract fields for each country in each year
 pred.fields <- list()
-for (i in 1:length(countries)){
+for (i in 1:length(countries.full)){
     pred.fields[[i]] <- find.fields(pred.fit[[i]], mesh = mesh,n.t = length(table(time)),
                                     spatial.polygon = sps[[i]],dims = dims)[[1]]
 }
@@ -168,5 +176,6 @@ for(i in names(pred.fields)){
     title(paste(i,"---",pred.year, "spatial effect for out-of-sample prediction"),
                cex.main = 0.7)
     plot(sps[[i]], add = TRUE)
+    gc()
 }
 dev.off()
