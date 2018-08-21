@@ -23,7 +23,7 @@ mesh <- inla.mesh.2d(boundary = bdry, max.edge = c(6,100)/180,cutoff = 6/180) ##
 ##############################################
 ## which year we want to predict
 pred.year <- 2017
-pred.fit <- list()
+pred.fit.summary <- pred.fields <- list()
 ##################################################
 for(i in 1:length(countries)){
     data <- terrorism_aggregate
@@ -37,33 +37,29 @@ for(i in 1:length(countries)){
     ## fit for out of sample predictions
     ## Put NA values at pred locations
     data$total[data$iyear == pred.year & data$country == countries.full[i]] <- NA
-    pred.fit[[i]] <- geo.fit(mesh = mesh, locs = locs, response = data$total,covariates = covariates,
-                             control.time = list(model = "rw1",
-                                                 param = list(theta = list(prior = "pc.prec",param=c(1,0.01)))),
-                             temp = time,family = "poisson", sig0 = 0.2, rho0 = 0.01,Prho = 0.9,
-                             control.compute = list(waic = TRUE,config = TRUE),
-                             control.inla = control.inla)
+    pred.fit.tmp <- geo.fit(mesh = mesh, locs = locs, response = data$total,covariates = covariates,
+                            control.time = list(model = "rw1",
+                                                param = list(theta = list(prior = "pc.prec",param=c(1,0.01)))),
+                            temp = time,family = "poisson", sig0 = 0.2, rho0 = 0.01,Prho = 0.9,
+                            control.compute = list(waic = TRUE,config = TRUE),
+                            control.inla = control.inla)
+    pred.fit.summary[[i]] <- summary(pred.fit.tmp)$fixed ## summaries
+    ## extract fields for each country in each year
+    pred.fields[[i]] <- find.fields(pred.fit.tmp, mesh = mesh,n.t = length(table(time)),
+                                    spatial.polygon = sps[[i]],dims = dims)[[1]]
+    cat(countries[[i]], "model fitted","\n")
+    
 }
 
 ## name lists
-names(sps) <- names(pred.fit) <- countries.full
+names(sps) <- names(pred.fit.summary) <- names(pred.fields) <- countries.full
 
 
-#### Plots for comparision
-## extract fields for each country in each year
-pred.fields <- list()
-for (i in 1:length(countries.full)){
-    pred.fields[[i]] <- find.fields(pred.fit[[i]], mesh = mesh,n.t = length(table(time)),
-                                    spatial.polygon = sps[[i]],dims = dims)[[1]]
-}
-## name list
-names(pred.fields) <- countries.full
 proj <- inla.mesh.projector(mesh,dims = dims) ## set up projection
 
-## get raster values (will take a while)
-source("get_raster_vals.r")
 
 ### plotting loop for each country out-of sample prediction
+cols <- topo.colors(100) ## colours for plotting
 pdf(file = "pnas_out-predictions_fields.pdf", paper='A4r',width = 11,height = 8)
 for(i in names(pred.fields)){
     par(mar = c(0,0,2,6))
@@ -75,11 +71,14 @@ for(i in names(pred.fields)){
 }
 dev.off()
 
+## get raster values (will take a while)
+source("get_raster_vals.r")
+
 ### plotting loop for each country out-of sample prediction on scaled response scale
 pdf(file = "pnas_out-predictions_scaled.pdf", paper='A4r',width = 11,height = 8)
 for(i in names(pred.fields)){
     par(mar = c(0,0,2,6))
-    coefs <- summary(pred.fit[[i]])$fixed[,1]
+    coefs <- pred.fit.summary[[i]][,1]
     resp <- coefs[1] + coefs[2]*pops[[8]] + coefs[3]*tt + coefs[4]*lums[[8]]
     resp <- matrix(resp,ncol = dims[2],nrow = dims[1]) + pred.fields[[i]][[8]]
     resp <- exp(resp)
@@ -87,7 +86,7 @@ for(i in names(pred.fields)){
     resp.sc <- resp/mx
     image.plot(proj$x,proj$y,resp.sc,axes  = FALSE, xlab = "",ylab = "",col = cols,
                xlim = sps[[i]]@bbox[1,],ylim = sps[[i]]@bbox[2,])
-    title(paste(i,"---",pred.year, "spatial effect for out-of-sample prediction"),
+    title(paste(i,"---",pred.year, "scaled out-of-sample prediction"),
                cex.main = 0.7)
     plot(sps[[i]], add = TRUE)
 }
