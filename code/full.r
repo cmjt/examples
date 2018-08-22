@@ -7,12 +7,10 @@ locs <- cbind(data$x.coord, data$y.coord, data$z.coord)
 ## create mesh of the world projected onto the unit sphere
 bdry <- inla.sp2segment(world)
 bdry$loc <- inla.mesh.map(bdry$loc, projection = "longlat",inverse = TRUE)
-mesh <- inla.mesh.2d(boundary = bdry, loc = locs, max.edge = c(4,20)/180,cutoff = 4/180 ) ## plot(mesh) to vizualise
+mesh <- inla.mesh.2d(boundary = bdry, loc = locs, max.edge = c(5,50)/180,cutoff = 5/180 ) ## plot(mesh) to vizualise
 
 ##############################################
 ##############################################
-
-
 
 ## Create a named data frame of covariates
 covariates <- data.frame(population = data$pop, time.to.city = data$tt,
@@ -38,5 +36,5 @@ fit <- geo.fit(mesh = mesh, locs = locs, response = data$total,
                                                              param=c(1,0.01)))),
                temp = time,family = "poisson", sig0 = 0.2, rho0 = 0.01,Prho = 0.9,
                control.compute = list(waic = TRUE,config = TRUE,openmp.strategy = "huge"),
-               control.mode = list(result = fit.quick, restart = TRUE)
+               control.mode = list(result = fit.quick, restart = TRUE),
                control.inla = list(diagonal = 100)) ## full fit using starting values for quick fit above
