@@ -166,8 +166,8 @@ dev.off()
 nearby.countries <- lapply(sps,function(x) as.character(world$name[gTouches(x,world,byid = TRUE)]))
 for(i in countries.full){nearby.countries[[i]] <- c(nearby.countries[[i]],i)}
 sp.near <- sapply(nearby.countries,function(x) world[world$name %in% x,])
-min.mesh.sc <- 3/180
-max.mesh.sc <- 10/180 ## these two object control the resolution of the mesh for each country set
+min.mesh.sc <- 6/180
+max.mesh.sc <- 20/180 ## these two object control the resolution of the mesh for each country set
 ## they are relative to the range of the country set
 
 ##############################################
@@ -220,7 +220,7 @@ for(cont in countries.full){
 ### plotting loop for each country out-of sample prediction
 cols <- topo.colors(100) ## colours for plotting
 pdf(file = "pnas_out-predictions_fields.pdf", paper='A4r',width = 11,height = 8)
-for(i in names(countries.full)){
+for(i in names(pred.fields)){
     par(mar = c(0,0,2,6))
     image.plot(projs[[i]]$x,projs[[i]]$y,pred.fields[[i]][[8]],axes  = FALSE, xlab = "",ylab = "",col = cols,
                xlim = sps[[i]]@bbox[1,],ylim = sps[[i]]@bbox[2,])
@@ -234,7 +234,7 @@ dev.off()
 
 ### plotting loop for each country out-of sample prediction on scaled response scale
 pdf(file = "pnas_out-predictions_scaled.pdf", paper='A4r',width = 11,height = 8)
-for(i in names(countries.full)){
+for(i in names(pred.fields)){
     par(mar = c(0,0,2,6))
     image.plot(proj$x,proj$y,resp.sc[[i]],axes  = FALSE, xlab = "",ylab = "",col = cols,
                xlim = sps[[i]]@bbox[1,],ylim = sps[[i]]@bbox[2,])
