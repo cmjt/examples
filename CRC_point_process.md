@@ -104,7 +104,7 @@ highlights all nuclei in the image). Plot ii) is an image analysis mask
 overlay from automatic machine learnt segmentation of the digital image:
 Plot iii) is the point pattern formed by the nuclei of the tumour
 (black) and stroma (grey) cells shown in the previous two
-images.](CRC_point_process_files/figure-markdown_strict/image.pdf)
+images.](CRC_point_process_files/figure-markdown_strict/cancer.png)
 
 The **palm** functions **fit.ns()** and **fit.void()** can also take
 lists for and **lims** arquments. This allows us to estimate parameters
