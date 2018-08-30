@@ -4,9 +4,6 @@ library(raster) ## to extract covariates for plotting
 library(rgeos)
 library(rgdal) ## for nearby countries
 #############################################
-##### Do you want to fit a "dirty" model or not (run the following line each time you want to change
-## change to FALSE if you don't want the quick eb and gaussian inla strategies to be used
-quick <- TRUE; if(quick){control.inla <- list(int.strategy = "eb",strategy = "gaussian",diagonal = 100)};if(!quick){ control.inla <- list(diagonal = 100)}
 ## control coarseness of the projections
 dims <- c(2000,2000)
 ## full country names for data we are interested in
@@ -33,7 +30,7 @@ sp.near <- sapply(nearby.countries,function(x) world[world$name %in% x,])
 
 meshs <- list()
 
-mn <- list(2/180,1/180,2/180,0.5/180,2/180,1.5/180,2/180,1/180,1/180,0.5/180,1/180,1/180,0.5/180)
+mn <- list(2/180,1/180,2/180,1/180,2/180,2/180,2/180,1/180,1/180,1/180,1/180,1/180,1/180)
 max <- list(10/180,5/180,10/180,3/180,10/180,5/180,10/180,3/180,3/180,2/180,5/180,5/180,3/180)
 names(mn) <- names(max) <- countries.full ## names mesh resolution lists
 
@@ -62,13 +59,39 @@ for(cont in countries.full){
     ## fit for out of sample predictions
     ## Put NA values at pred locations
     data$total[data$iyear == pred.year & data$country == countries.full[cont]] <- NA
-    pred.fitx[[cont]] <- geo.fit(mesh = meshs[[cont]], locs = locs, response = data$total,covariates = covariates,
+    pred.fits.tmp <- geo.fit(mesh = meshs[[cont]], locs = locs, response = data$total,covariates = covariates,
+                             control.time = list(model = "rw1",
+                                                 param = list(theta = list(prior = "pc.prec",param=c(1,0.01)))),
+                             temp = time,family = "poisson", sig0 = 0.2, rho0 = 0.01,Prho = 0.9,
+                             control.compute = list(waic = TRUE,config = TRUE,openmp.strategy = "huge"),
+                             control.inla = list(int.strategy = "eb",strategy = "gaussian",diagonal = 100))
+    cat(cont, " initial model fitted","\n")
+    pred.fits[[cont]] <- geo.fit(mesh = meshs[[cont]], locs = locs, response = data$total,covariates = covariates,
                             control.time = list(model = "rw1",
                                                 param = list(theta = list(prior = "pc.prec",param=c(1,0.01)))),
                             temp = time,family = "poisson", sig0 = 0.2, rho0 = 0.01,Prho = 0.9,
-                            control.compute = list(waic = TRUE,config = TRUE),
-                            control.inla = control.inla)
-    cat(cont, "model fitted","\n")
+                            control.compute = list(waic = TRUE,openmp.strategy = "huge"),
+                            control.mode = list(result = pred.fits.tmp, restart = TRUE),
+                            control.inla = list(diagonal = 100))
+    cat(cont, "full model fitted","\n")
+}
+
+## create a list of projections
+projs <- lapply(meshs, inla.mesh.projector, dims = dims)
+## extract a list of fields
+pred.fields <- list()
+for(cont in countries.full){
+    data.full <- terrorism_aggregate
+    data <- data.full[data.full$country %in% c(countries.full[cont],nearby.countries[[cont]]),]
+    ## create temporal indecies
+    n.t <- length(table(data$iyear - min(data$iyear) + 1))
+    inside <- lgcpSPDE:::inwin(projs[[cont]],as.owin(sps[[cont]]))
+    spde <-inla.spde2.matern(mesh = meshs[[cont]], alpha = 2)
+    means <- list()
+    pred.fields[[cont]] <-  lapply(1:n.t, function(j) {
+        r <- inla.mesh.project(proj, field = x$summary.random[["field"]]$mean[1:spde$n.spde + (j-1)*spde$n.spde])
+        r[!inside] <- NA; return(r)
+    })
 }
 
 
