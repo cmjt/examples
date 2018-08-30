@@ -2,7 +2,7 @@
 title: "CRC_point_process"
 author: "Charlotte M. Jones-Todd"
 date: "September 2017"
-output: html_document
+output: md_document
 bibliography: ../../../MEGA/my_styles/bib.bib
 ---
 
@@ -94,28 +94,45 @@ plot.palm.sim(void)
 plot(fit.void)
 ```
 
-## Variance estimation
-
-Variance estimation is achieved via a parametric bootstrap, which can be carried out through the use of the **boot.palm()** function. For example, running **boot.palm(fit.thomas,N = 1000)** will perform 1000 bootstrap resamples of the fitted thomas process in order to estimate standard errors of the parameters.
-
-```{r testing,eval = FALSE,echo = FALSE}
-library(gapski)
-points<-sim.gap(pars=c(D=10,lambda=300,R=0.075))
-fit.gap<-fit.gap(points = points,lims = rbind(c(0,1),c(0,1)),trunc = 0.5,D.sv = 10,D.bounds=c(8,12))
-library(nspp)
-points <- sim.ns(pars=c(D=7, lims = rbind(c(0, 1), c(0, 1)), child.disp=0.05,child.par=8),
-                 dispersion="uniform",rchild=rpois)
-child.dist = list(mean = function(x) x, var = function(x) x,sv = 8, bounds = c(1e-6, nrow(points)))
-fit.mat.pois.2D <- fit.ns(points = points, lims = rbind(c(0, 1), c(0, 1)),R = 0.5, dispersion="uniform",child.dist = child.dist)
-```
 
 # CRC data
 
-As per @charlotte2017cancer below is an digital image of a tissue section from a CRC patient (left hand plot of the Figure), the tumour and stroma structures of the tissue sections are coloured in red and green respectively. The far right plot of shows the point pattern formed by the tumour and stroma cell nuclei, black and grey respectively, of the same tissue section.
+This section discusses fitting models to the colorectal cancer (CRC) data discussed in @charlotte2017cancer. Please note that the CRC data cannot be supplied however to illustrate the methods in @charlotte2017cancer we simulate data from a Thomas point process model.
 
-![Illustration of the image analysis of one patient's slide which enables the pinpointing of nuclei. Left: Composite immunofluorescence digital image showing Tumour (red), Stroma (green) and all nuclei (blue). Middle: Image analysis mask overlay from automatic machine learnt segmentation of the digital image. Tumour (purple), stroma (turquoise), necrosis (yellow). Right: Point pattern formed by the nuclei of the tumour (black) and stroma (grey) cells shown in the previous two images.](CRC_point_process_files/figure-markdown_strict/cancer.png)
-```{r load,eval = FALSE,echo = FALSE}
-load("~/mega/papers/cancer/cancerdata.RData")
+![Illustration of one image of a patient's slide which enables the pinpointing of nuclei. Plot i) is a composite immunofluorescence digital image (red fluorescence highlights tumour cells and blue fluorescence highlights all nuclei in the image). Plot ii) is an image analysis mask overlay from automatic machine learnt segmentation of the digital image: \textcolor{blue}{tumour (purple), and stroma (turquoise).} Plot iii) is the point pattern formed by the nuclei of the tumour (black) and stroma (grey) cells shown in the previous two images.](../CRC_point_process_files/figure-markdown_strict/image.pdf)
+
+The **palm** functions **fit.ns()** and **fit.void()** can also take lists for \texttt{points} and **lims** arquments. This allows us to estimate parameters at the patient level for each tumour and stroma pattern in the CRC data. Below we first simulate thirty NSPPs, fifteen for each of two patients and illustrate fitting a Thomas process to the data.
+
+```{r list of "slide",echo = TRUE}
+## simulate fifteen point patterns for two "patients"
+N <- 15 ## number of patterns to simulate
+x <- list(rbind(c(0,1),c(0,1))) ## limits of one pattern
+lims <- rep(x, N) ## repeat these limits for each patters
+## simulate for "first" patient
+sim <- sim.ns(c(D = 7, lambda = 8, sigma = 0.05), lims = lims)
+sim.points.one <- lapply(sim, function(x) x$points) ## get all daughter points
+str(sim.points.one)
+
+## simulate for "second" patient
+sim <- sim.ns(c(D = 10, lambda = 4, sigma = 0.1), lims = lims)
+sim.points.two <- lapply(sim, function(x) x$points) ## get all daughter points
+str(sim.points.two)
+
+```
+
+```{r fit,echo = TRUE}
+## fit models
+fit.one <- fit.ns(points = sim.points.one, lims = lims, R = 0.5)
+coef(fit.one)
+fit.two <- fit.ns(points = sim.points.two, lims = lims, R = 0.5)
+coef(fit.two)
+```
+
+```{r plot palms}
+## plot Palm intensity for all patterns
+plot(fit.one)
+plot(fit.two)
+
 
 ```
 

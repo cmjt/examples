@@ -2,20 +2,20 @@ Simulated examples
 ==================
 
 Parameter estimation for the Thomas, Matérn, and void process is carried
-out by the R package **palm** (B. C. Stevenson (2017)), which is
-available on CRAN. All models are fitted using either the **fit.ns()**
-function, for NSPP, or the **fit.void()** function, for the void
-process.
+out by the R package **palm** (Stevenson (2017)), which is available on
+CRAN. All models are fitted using either the **fit.ns()** function, for
+NSPP, or the **fit.void()** function, for the void process.
 
-Below, code examples demonstrate using functionality of the **palm** (B.
-C. Stevenson (2017)) package to simulate from and fit a two-dimensional
+Below, code examples demonstrate using functionality of the **palm**
+(Stevenson (2017)) package to simulate from and fit a two-dimensional
 point process. This is done for of each of the types mentioned above.
 The simulated data for each process are shown---parents are plotted at
 grey crosses and daughters by black dots---along with the fitted (solid
 lines) and empirical (dashed lines) Palm intensity functions.
 
 Please note that parameters of the Palm intensity functions may differ,
-in name only, from the descriptions in Jones-Todd et al. (2017).
+in name only, from the descriptions in Jones-Todd et al. (In
+submission).
 
     library(palm)
 
@@ -84,268 +84,111 @@ parent.
     coef(fit.void)
 
     ##           Dp           Dc          tau 
-    ##   8.54355310 306.63597598   0.09059584
+    ##  11.39166194 312.34401006   0.08159933
 
 ![](CRC_point_process_files/figure-markdown_strict/plot%20void-1.png)
-
-Variance estimation
--------------------
-
-Variance estimation is achieved via a parametric bootstrap, which can be
-carried out through the use of the **boot.palm()** function. For
-example, running **boot.palm(fit.thomas,N = 1000)** will perform 1000
-bootstrap resamples of the fitted thomas process in order to estimate
-standard errors of the parameters.
 
 CRC data
 ========
 
-As per Jones-Todd et al. (2017) below is an digital image of a tissue
-section from a CRC patient (left hand plot of the Figure), the tumour
-and stroma structures of the tissue sections are coloured in red and
-green respectively. The far right plot of shows the point pattern formed
-by the tumour and stroma cell nuclei, black and grey respectively, of
-the same tissue section.
+This section discusses fitting models to the colorectal cancer (CRC)
+data discussed in Jones-Todd et al. (In submission). Please note that
+the CRC data cannot be supplied however to illustrate the methods in
+Jones-Todd et al. (In submission) we simulate data from a Thomas point
+process model.
 
-![Illustration of the image analysis of one patient's slide which
-enables the pinpointing of nuclei. Left: Composite immunofluorescence
-digital image showing Tumour (red), Stroma (green) and all nuclei
-(blue). Middle: Image analysis mask overlay from automatic machine
-learnt segmentation of the digital image. Tumour (purple), stroma
-(turquoise), necrosis (yellow). Right: Point pattern formed by the
-nuclei of the tumour (black) and stroma (grey) cells shown in the
-previous two
-images.](CRC_point_process_files/figure-markdown_strict/cancer.png)
+![Illustration of one image of a patient's slide which enables the
+pinpointing of nuclei. Plot i) is a composite immunofluorescence digital
+image (red fluorescence highlights tumour cells and blue fluorescence
+highlights all nuclei in the image). Plot ii) is an image analysis mask
+overlay from automatic machine learnt segmentation of the digital image:
+Plot iii) is the point pattern formed by the nuclei of the tumour
+(black) and stroma (grey) cells shown in the previous two
+images.](CRC_point_process_files/figure-markdown_strict/image.pdf)
 
-    library(palm)
-    ## to allow parallel computing from R
-    library(foreach)
-    library(doSNOW)
-    R <- 0.5
-    n <- length(Tu)
-    ncores <- 5
+The **palm** functions **fit.ns()** and **fit.void()** can also take
+lists for and **lims** arquments. This allows us to estimate parameters
+at the patient level for each tumour and stroma pattern in the CRC data.
+Below we first simulate thirty NSPPs, fifteen for each of two patients
+and illustrate fitting a Thomas process to the data.
 
-    ## tumour locs
-    points<-list()
-    ## stroma locs
-    pointss<-list()
-    for(i in 1:n){
-        points[[i]] <- cbind(Tu[[i]]$inner_x,Tu[[i]]$inner_y)/2500
-        pointss[[i]] <- cbind(St[[i]]$inner_x,St[[i]]$inner_y)/2500
-    }
+    ## simulate fifteen point patterns for two "patients"
+    N <- 15 ## number of patterns to simulate
+    x <- list(rbind(c(0,1),c(0,1))) ## limits of one pattern
+    lims <- rep(x, N) ## repeat these limits for each patters
+    ## simulate for "first" patient
+    sim <- sim.ns(c(D = 7, lambda = 8, sigma = 0.05), lims = lims)
+    sim.points.one <- lapply(sim, function(x) x$points) ## get all daughter points
+    str(sim.points.one)
 
+    ## List of 15
+    ##  $ : num [1:78, 1:2] 0.731 0.767 0.874 0.878 0.888 ...
+    ##  $ : num [1:33, 1:2] 0.529 0.5 0.578 0.603 0.49 ...
+    ##  $ : num [1:40, 1:2] 0.444 0.532 0.582 0.466 0.508 ...
+    ##  $ : num [1:85, 1:2] 0.1348 0.1348 0.1606 0.151 0.0409 ...
+    ##  $ : num [1:51, 1:2] 0.36 0.484 0.377 0.497 0.415 ...
+    ##  $ : num [1:80, 1:2] 0.811 0.749 0.749 0.815 0.687 ...
+    ##  $ : num [1:46, 1:2] 0.904 0.817 0.926 0.76 0.756 ...
+    ##  $ : num [1:76, 1:2] 0.567 0.523 0.499 0.592 0.674 ...
+    ##  $ : num [1:60, 1:2] 0.653 0.613 0.769 0.672 0.688 ...
+    ##  $ : num [1:42, 1:2] 0.645 0.708 0.688 0.694 0.651 ...
+    ##  $ : num [1:58, 1:2] 0.0726 0.026 0.0241 0.2717 0.3281 ...
+    ##  $ : num [1:42, 1:2] 0.385 0.5 0.417 0.392 0.395 ...
+    ##  $ : num [1:63, 1:2] 0.767 0.739 0.761 0.705 0.771 ...
+    ##  $ : num [1:32, 1:2] 0.846 0.811 0.992 0.794 0.881 ...
+    ##  $ : num [1:58, 1:2] 0.558 0.493 0.574 0.394 0.513 ...
 
-    ## Set up results file
-    ## ID, grades, and mortality index
-    ID <- grade <- mort <- rep(NA,n)
+    ## simulate for "second" patient
+    sim <- sim.ns(c(D = 10, lambda = 4, sigma = 0.1), lims = lims)
+    sim.points.two <- lapply(sim, function(x) x$points) ## get all daughter points
+    str(sim.points.two)
 
-    for(i in 1:n){
-        grade[i]<-as.character(Tu[[i]]$Grade[1])
-        mort[i]<-Tu[[i]]$Mortality[1]
-        ID[i]<-Tu[[i]][1,1]
-    }
+    ## List of 15
+    ##  $ : num [1:42, 1:2] 0.5241 0.4017 0.2367 0.0337 0.2431 ...
+    ##  $ : num [1:19, 1:2] 0.0642 0.1441 0.371 0.234 0.3733 ...
+    ##  $ : num [1:39, 1:2] 0.711 0.934 0.964 0.889 0.832 ...
+    ##  $ : num [1:41, 1:2] 0.51 0.305 0.403 0.309 0.343 ...
+    ##  $ : num [1:26, 1:2] 0.7556 0.7364 0.8178 0.9225 0.0182 ...
+    ##  $ : num [1:34, 1:2] 0.984 0.867 0.659 0.752 0.718 ...
+    ##  $ : num [1:45, 1:2] 0.496 0.729 0.471 0.542 0.307 ...
+    ##  $ : num [1:38, 1:2] 0.903 0.827 0.703 0.44 0.639 ...
+    ##  $ : num [1:34, 1:2] 0.877 0.968 0.898 0.9 0.991 ...
+    ##  $ : num [1:12, 1:2] 0.1479 0.0216 0.1411 0.0308 0.1113 ...
+    ##  $ : num [1:32, 1:2] 0.113 0.251 0.153 0.264 0.392 ...
+    ##  $ : num [1:39, 1:2] 0.705 0.679 0.825 0.577 0.727 ...
+    ##  $ : num [1:53, 1:2] 0.218 0.211 0.169 0.271 0.204 ...
+    ##  $ : num [1:37, 1:2] 0.1453 0.0975 0.097 0.7379 0.6825 ...
+    ##  $ : num [1:46, 1:2] 0.0335 0.1141 0.0647 0.012 0.0679 ...
 
-    resultDF <- data.frame(ID = ID,grade = grade, mort = mort)
+    ## fit models
+    fit.one <- fit.ns(points = sim.points.one, lims = lims, R = 0.5)
+    coef(fit.one)
 
-    ## set up results columns
-    resultDF$thomas.T.D <- resultDF$thomas.T.lam <- resultDF$thomas.T.sig <- rep(NA,n)
-    resultDF$thomas.S.D <- resultDF$thomas.S.lam <- resultDF$thomas.S.sig <- rep(NA,n)
-    resultDF$matern.T.D <- resultDF$matern.T.lam <- resultDF$matern.T.tau <- rep(NA,n)
-    resultDF$matern.S.D <- resultDF$matern.S.lam <- resultDF$matern.S.tau <- rep(NA,n)
-    resultDF$void.T.Dp <- resultDF$void.T.Dc <- resultDF$void.T.tau <- rep(NA,n)
-    resultDF$void.S.Dp <- resultDF$void.S.Dc <- resultDF$void.S.tau <- rep(NA,n)
-     
-    ## write patient info out to a file
-    ## write.csv(resultDF,file = "resultsDF.csv",row.names = FALSE)
+    ##          D     lambda      sigma 
+    ## 7.95941948 6.80545183 0.04658544
 
-    ## change number of cores used
-    ## create a cluster with ncores cores
-    cl <- makeSOCKcluster(ncores)
-    registerDoSNOW(cl)
-    progress <-  function(x) cat(sprintf("T Thomas model %d \n", x))
-    opts <- list(progress=progress)
+    fit.two <- fit.ns(points = sim.points.two, lims = lims, R = 0.5)
+    coef(fit.two)
 
-Fit Thomas process
-------------------
+    ##          D     lambda      sigma 
+    ## 9.66838370 3.57232273 0.09250772
 
-    ### Tumour
+    ## plot Palm intensity for all patterns
+    plot(fit.one)
 
-    ### Tumour
+![](CRC_point_process_files/figure-markdown_strict/plot%20palms-1.png)
 
-    resultDF[,c(6,5,4)] <- foreach(i = 1:n, 
-                  .combine = "rbind", 
-                  .packages = "palm",
-                  .options.snow=opts) %dopar% {
-        fit <- fit.ns(points=points[[i]],lims=rbind(c(0,1),c(0,1)),R = R,
-                      start = c(sigma = start[i,4], lambda = start[i,5], D = start[i,6]))
-        coef(fit)[1:3]
-    }
-    ### Stoma
-    progress <-  function(x) cat(sprintf("S Thomas model %d \n", x))
-    opts <- list(progress=progress)
+    plot(fit.two)
 
-    resultDF[,c(9,8,7)] <- foreach(i = 1:n, 
-                  .combine = "rbind", 
-                  .packages = "palm",
-                  .options.snow=opts) %dopar% {
-        fit <- fit.ns(points=pointss[[i]],lims=rbind(c(0,1),c(0,1)),R = R,
-                      start = c(sigma = start[i,7], lambda = start[i,8], D = start[i,9]))
-        coef(fit)[1:3]
-    }
-    ## write patient info out to a file
-    ## write.csv(resultDF,file = "resultsDF.csv",row.names = FALSE)
-
-Fit Matérn process
-------------------
-
-    ### Tumour
-    progress <-  function(x) cat(sprintf("T Matern model %d \n", x))
-    opts <- list(progress=progress)
-
-    resultDF[,c(12,11,10)] <- foreach(i = 1:n, 
-                  .combine = "rbind", 
-                  .packages = "palm",
-                  .options.snow=opts) %dopar% {
-        fit <- fit.ns(points=points[[i]],lims=rbind(c(0,1),c(0,1)),R = R,disp = "uniform",
-                      start = c(tau = start[i,10], lambda = start[i,11], D = start[i,12]))
-        coef(fit)[1:3]
-    }
-
-
-    ### Stoma
-
-    progress <-  function(x) cat(sprintf("S Matern model %d \n", x))
-    opts <- list(progress=progress)
-
-    resultDF[,c(15,14,13)] <- foreach(i = 1:n, 
-                  .combine = "rbind", 
-                  .packages = "palm",
-                  .options.snow=opts) %dopar% {
-                      fit <- fit.ns(points=pointss[[i]],lims=rbind(c(0,1),c(0,1)),R = R,disp = "uniform",
-                                    start = c(tau = start[i,13], lambda = start[i,14], D = start[i,15]))
-        coef(fit)[1:3]
-    }
-    ## write patient info out to a file
-    ## write.csv(resultDF,file = "resultsDF.csv",row.names = FALSE)
-
-Fit Void process
-----------------
-
-    ### Tumour
-
-    progress <-  function(x) cat(sprintf("T void model %d \n", x))
-    opts <- list(progress=progress)
-
-    resultDF[,c(18,17,16)] <- foreach(i = 1:n, 
-                  .combine = "rbind", 
-                  .packages = "palm",
-                  .options.snow=opts) %dopar% {
-                      fit <- fit.void(points=points[[i]],lims=rbind(c(0,1),c(0,1)),R = R,
-                                      bounds = list(Dp = c(0,70)),
-                                      start = c(tau = start[i,16], Dc = start[i,17], Dp = start[i,18]))
-        coef(fit)[1:3]
-    }
-
-
-    ### Stoma
-
-    progress <-  function(x) cat(sprintf("S void model %d \n", x))
-    opts <- list(progress=progress)
-
-    resultDF[,c(21,20,19)] <- foreach(i = 1:n, 
-                  .combine = "rbind", 
-                  .packages = "palm",
-                  .options.snow=opts) %dopar% {
-                      fit <- fit.void(points=pointss[[i]],lims=rbind(c(0,1),c(0,1)),R = R,
-                                      bounds = list(Dp = c(0,70)),
-                                      start = c(tau = start[i,19], Dc = start[i,20], Dp = start[i,21]))
-        coef(fit)[1:3]
-    }
-    ## write patient info out to a file
-    ## write.csv(resultDF,file = "resultsDF.csv",row.names = FALSE)
-
-Bootstrap functions
--------------------
-
-    ## read in csv of parameters (as above)
-    df <- read.csv("resultsDF.csv")
-
-
-    ############# Heirarchical bootstrap
-    resample <- function(dat, cluster, replace) {
-      # sample the clustering factor
-      cls <- sample(unique(dat[[cluster[1]]]), replace=replace[1])
-      # subset on the sampled clustering factors
-      sub <- lapply(cls, function(b) subset(dat, dat[[cluster[1]]]==b))
-      # join and return samples
-      do.call(rbind, sub)
-
-    }
-
-    ## Function to do a heirarchical bootstrap for CRC data.
-    ## This function resamples based on a nested level (i.e., as each patient has multiple slides)
-    ## Arguments are, 1) data a named list of numeric vectors to be bootstrapped 2) nsim times based on the factor
-    ## vector 3) patient
-    ## By default the "median" of the bootstrapped resamples (again median resamples) for each list element (data) are returned
-    ## along with 95% quantiles
-
-    bootstrap <- function(data, nsim, patient, value = "median"){
-        pb <- txtProgressBar(style = 3)
-        cluster = "patient"
-        boots <- list()
-        for(i in 1:length(data)){
-            dat <- data.frame(measurement = data[[i]],patient = patient)
-            boots[[i]] <- replicate(nsim, median(resample(dat, cluster, TRUE)$measurement,na.rm = TRUE))
-            setTxtProgressBar(pb,i)
-        }
-        close(pb)
-        val <- sapply(boots,value)
-        quantiles <- sapply(boots,quantile,c(0.025,0.975))
-        res <- rbind(val = val, quantiles)
-        colnames(res) <- names(data)
-        return(res)
-    }
-
-    ## Function to chose the data to split, and the level at which to split to perform the heirarchical bootstrap above.
-    ## name should be a character vector of the data one wishes to bootstrap.
-    ## by a single character of the level at which to split (i.e., mortality of patient).
-    ## ID a single character specifying the name of the column in df whuch contains
-    ## the patient IDs.
-    ## df a matrix of data with columns named name, by and ID as above.
-    ## nsim an integer specifying the number of bootstraps to do.
-    ## the function returns a nested list of the output of the bootstrap function (above)
-    ## for each chosen level.
-
-    fun <- function(name, by, ID, df, nsim){
-        d <- list()
-        for (i in 1:length(name)){
-            d[[i]] <-  split(df[[name[i]]],df[[by]])
-        }
-        pat <- split(df[[ID]],df[[by]])
-        names(d) <- name
-        boots <- list()
-        for (i in 1:length(d)){
-            boots[[i]] <- list()
-            for(j in 1:length(d[[i]])){
-                boots[[i]][[j]] <- bootstrap(data = d[[i]][j],nsim = nsim, patient = pat[[j]])
-            }
-        }
-        names(boots) <- name
-        boots
-    }
-
-For example to bootstrap the void process dispersion parameters for both
-the Tumour and Stroma nuclei, the following code should be run.
-
-    res <- fun(c("void.T.tau","void.S.tau"),"grade","ID", df,1000)
+![](CRC_point_process_files/figure-markdown_strict/plot%20palms-2.png)
 
 References
 ==========
 
-Jones-Todd, C. M, P Caie, J Illian, B. C Stevenson, Savage A, D
-Harrison, and J Bown. 2017. “Identifying Unusual Structures Inherent in
-Point Pattern Data and Its Application in Predicting Cancer Patient
-Survival.” *ArXiv Preprint ArXiv:1705.05938*.
+Jones-Todd, C. M, P Caie, J Illian, B. C Stevenson, A Savage, D
+Harrison, and J Bown. In submission. “Identifying Unusual Structures
+Inherent in Point Pattern Data and Its Application in Predicting Cancer
+Patient Survival.”
 
-Stevenson, Ben C. 2017. *Palm: Fitting Point Process Models Using the
+Stevenson, B. C. 2017. *Palm: Fitting Point Process Models Using the
 Palm Likelihood*. <https://github.com/b-steve/palm>.
