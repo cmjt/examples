@@ -5,10 +5,9 @@ library(rgeos)
 library(rgdal) ## for nearby countries
 #############################################
 ## control coarseness of the projections
-dims <- c(2000,2000)
+dims <- c(500,500)
 ## full country names for data we are interested in
-countries.full <- c("Afghanistan","Iraq","India","Philippines","Russia","Libya",
-                    "Pakistan","Nigeria","Iran","Syria","Turkey","Yemen","Ukraine")
+countries.full <- c("Afghanistan","Iraq","Pakistan","Iran")
 # list of spatial polygons of above countries
 sps <- sapply(countries.full, function(x) world[world$name == x,])
 ## prediction year
@@ -30,8 +29,8 @@ sp.near <- sapply(nearby.countries,function(x) world[world$name %in% x,])
 
 meshs <- list()
 
-mn <- list(2/180,1/180,2/180,1/180,2/180,2/180,2/180,1/180,1/180,1/180,1/180,1/180,1/180)
-max <- list(10/180,5/180,10/180,3/180,10/180,5/180,10/180,3/180,3/180,2/180,5/180,5/180,3/180)
+mn <- list(2/180,1/180,2/180,1/180)
+max <- list(10/180,5/180,10/180,3/180)
 names(mn) <- names(max) <- countries.full ## names mesh resolution lists
 
 
@@ -76,48 +75,4 @@ for(cont in countries.full){
     cat(cont, "full model fitted","\n")
 }
 
-## create a list of projections
-projs <- lapply(meshs, inla.mesh.projector, dims = dims)
-## extract a list of fields
-pred.fields <- list()
-for(cont in countries.full){
-    data.full <- terrorism_aggregate
-    data <- data.full[data.full$country %in% c(countries.full[cont],nearby.countries[[cont]]),]
-    ## create temporal indecies
-    n.t <- length(table(data$iyear - min(data$iyear) + 1))
-    inside <- lgcpSPDE:::inwin(projs[[cont]],as.owin(sps[[cont]]))
-    spde <-inla.spde2.matern(mesh = meshs[[cont]], alpha = 2)
-    means <- list()
-    pred.fields[[cont]] <-  lapply(1:n.t, function(j) {
-        r <- inla.mesh.project(proj, field = x$summary.random[["field"]]$mean[1:spde$n.spde + (j-1)*spde$n.spde])
-        r[!inside] <- NA; return(r)
-    })
-}
 
-
-### plotting loop for each country out-of sample prediction
-## cols <- topo.colors(100) ## colours for plotting
-## pdf(file = "pnas_out-predictions_fields.pdf", paper='A4r',width = 11,height = 8)
-## for(i in names(pred.fields)){
-##     par(mar = c(0,0,2,6))
-##     image.plot(projs[[i]]$x,projs[[i]]$y,pred.fields[[i]][[8]],axes  = FALSE, xlab = "",ylab = "",col = cols,
-##                xlim = sps[[i]]@bbox[1,],ylim = sps[[i]]@bbox[2,])
-##     title(paste(i,"---",pred.year, "spatial effect for out-of-sample prediction"),
-##                cex.main = 0.7)
-##     plot(sps[[i]], add = TRUE)
-## }
-## dev.off()
-
-
-
-## ### plotting loop for each country out-of sample prediction on scaled response scale
-## pdf(file = "pnas_out-predictions_scaled.pdf", paper='A4r',width = 11,height = 8)
-## for(i in names(pred.fields)){
-##     par(mar = c(0,0,2,6))
-##     image.plot(proj$x,proj$y,resp.sc[[i]],axes  = FALSE, xlab = "",ylab = "",col = cols,
-##                xlim = sps[[i]]@bbox[1,],ylim = sps[[i]]@bbox[2,])
-##     title(paste(i,"---",pred.year, "scaled out-of-sample prediction"),
-##                cex.main = 0.7)
-##     plot(sps[[i]], add = TRUE)
-## }
-## dev.off()
