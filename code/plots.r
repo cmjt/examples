@@ -1,6 +1,8 @@
-## calculate RMSE and % bias
-fitted <- exp(summary(fit)$fixed[1,1] + summary(fit)$fixed[2,1]*covariates[,1] +
-                                                    summary(fit)$fixed[3,1]*covariates[,2] +
+## calculate RMSE and % bias (NOTE this assumes full.r and fits.r have been run)
+## for full model
+fitted <- exp(summary(fit)$fixed[1,1] +
+                          summary(fit)$fixed[2,1]*covariates[,1] +
+                                      summary(fit)$fixed[3,1]*covariates[,2] +
                                                                 summary(fit)$fixed[4,1]*covariates[,3])
 observed <- data$total
 ## boxplot % bias
@@ -12,7 +14,25 @@ mse
 rmse <- sqrt(mse) ## RMSE
 rmse
 
-
+## for predicted models (NOTE this assumes full.r and fits.r have been run)
+gof.all <- list()
+for(cont in countries.full){
+    data.full <- terrorism_aggregate
+    data <- data.full[data.full$country %in% c(countries.full[cont],nearby.countries[[cont]]),]
+    ## Create a named data frame of covariates
+    covariates <- data.frame(population = data$pop, time.to.city = data$tt,
+                             luminosity = data$lum)
+    coef <- summary(pred.fits[[cont]])$fixed[,1]
+    fitted <- exp(coef[1] +
+                  coef[2]*covariates[,1] +
+                  coef[3]*covariates[,2] + coef[4]*covariates[,3])
+    observed <- data$total
+    pbias <- 100*sum(fitted - observed, na.rm = TRUE)/sum(observed,na.rm = TRUE) ##  % bias
+    mse <- sum((fitted - observed)^2,na.rm = TRUE)/length(fitted) ## MSE
+    rmse <- sqrt(mse) ## RMSE
+    gof.all[[cont]] <- data.frame(pbias = pbias,mse = mse, rmse = rmse)
+}
+gof.all
 ## Code to produce fitted values of models scaled between 0 and 1
 ## extract "in-sample" fields for the whole world
 dims <- c(1000,1000)
