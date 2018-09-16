@@ -10,8 +10,10 @@ dims <- c(500,500)
 countries.full <- c("Afghanistan","Iraq","Pakistan","Iran")
 # list of spatial polygons of above countries
 sps <- sapply(countries.full, function(x) world[world$name == x,])
-## prediction year
-pred.year <- 2017
+## tag to indicate if prediction is carried out (i.e., NA values put in place of data for countries of interest)
+PRED <- FALSE
+## prediction year if prediction is to be carried out
+if(PRED){pred.year <- 2017}
 
 
 ##############################################
@@ -43,7 +45,7 @@ for(cont in countries.full){
 
 
 ##############################################
-pred.fits <- list()
+fits <- list()
 ##############################################
 for(cont in countries.full){
     data.full <- terrorism_aggregate
@@ -56,16 +58,16 @@ for(cont in countries.full){
     ## create temporal indecies
     time <- data$iyear - min(data$iyear) + 1
     ## fit for out of sample predictions
-    ## Put NA values at pred locations
-    data$total[data$iyear == pred.year & data$country == countries.full[cont]] <- NA
-    pred.fits.tmp <- geo.fit(mesh = meshs[[cont]], locs = locs, response = data$total,covariates = covariates,
+    ## Put NA values at pred locations if PRED is TRUE
+    if(PRED){data$total[data$iyear == pred.year & data$country == countries.full[cont]] <- NA}
+    fits.tmp <- geo.fit(mesh = meshs[[cont]], locs = locs, response = data$total,covariates = covariates,
                              control.time = list(model = "rw1",
                                                  param = list(theta = list(prior = "pc.prec",param=c(1,0.01)))),
                              temp = time,family = "poisson", sig0 = 0.2, rho0 = 0.01,Prho = 0.9,
                              control.compute = list(waic = TRUE,config = TRUE,openmp.strategy = "huge"),
                              control.inla = list(int.strategy = "eb",strategy = "gaussian",diagonal = 100))
     cat(cont, " initial model fitted","\n")
-    pred.fits[[cont]] <- geo.fit(mesh = meshs[[cont]], locs = locs, response = data$total,covariates = covariates,
+    fits[[cont]] <- geo.fit(mesh = meshs[[cont]], locs = locs, response = data$total,covariates = covariates,
                             control.time = list(model = "rw1",
                                                 param = list(theta = list(prior = "pc.prec",param=c(1,0.01)))),
                             temp = time,family = "poisson", sig0 = 0.2, rho0 = 0.01,Prho = 0.9,
