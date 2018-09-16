@@ -72,7 +72,7 @@ for(cont in countries.full){
                                                 param = list(theta = list(prior = "pc.prec",param=c(1,0.01)))),
                             temp = time,family = "poisson", sig0 = 0.2, rho0 = 0.01,Prho = 0.9,
                             control.compute = list(waic = TRUE,openmp.strategy = "huge"),
-                            control.mode = list(result = pred.fits.tmp, restart = TRUE),
+                            control.mode = list(result = fits.tmp, restart = TRUE),
                             control.inla = list(diagonal = 100))
     cat(cont, "full model fitted","\n")
 }
