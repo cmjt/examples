@@ -6,11 +6,11 @@ A collection of short tutorials that demonstrate the use of code used to fit mod
 
 ### fit_multi.md
 
-Details the function used for the analysis of the Garden Bird Feeding Survey (GBFS) data provided by the British Trust for Ornithology (BTO) in the paper `A spatio-temporal multi-species model of a semi-continuous response' to appear in the Journal of the Royal Statistical Society series C.
+Details the function used for the analysis of the Garden Bird Feeding Survey (GBFS) data provided by the British Trust for Ornithology (BTO) in the paper "A spatio-temporal multi-species model of a semi-continuous response." C. M. Jones-Todd, B. Swallow, J. B. Illian, M. Toms. 2018. *Journal of the Royal Statistical Society: Series C (Applied Statistics)* 67 (3), 7005--722.
 
 ### CRC_point_process.md
 
-Details the functions used for colon rectal cancer patient data.
+Using cluster and void processes to model point patterns of tumour and stroma cell locations on slides from colon cancer patients. "Identifying prognostic structural features in tissue sections of colon cancer patients using point pattern analysis." C. M. Jones-Todd, P. Caie, J. B. Illian, B. C. Stevenson, A. Savage, D. J. Harrison, and J. L. Bown. 2018. DOI:10:1002/sim.8046
 
 ### shared_stochastic.md
 

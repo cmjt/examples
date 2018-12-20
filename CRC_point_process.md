@@ -14,8 +14,7 @@ grey crosses and daughters by black dots---along with the fitted (solid
 lines) and empirical (dashed lines) Palm intensity functions.
 
 Please note that parameters of the Palm intensity functions may differ,
-in name only, from the descriptions in Jones-Todd et al. (In
-submission).
+in name only, from the descriptions in Jones-Todd et al. (2018).
 
     library(palm)
 
@@ -43,7 +42,7 @@ daughters are scattered around their parents.
     coef(fit.thomas)
 
     ##          D     lambda      sigma 
-    ## 3.87798778 6.29007212 0.05679659
+    ## 3.87800024 6.29007765 0.05679637
 
 ![](CRC_point_process_files/figure-markdown_strict/plot%20thomas-1.png)
 
@@ -84,7 +83,7 @@ parent.
     coef(fit.void)
 
     ##           Dp           Dc          tau 
-    ##  11.39166194 312.34401006   0.08159933
+    ##   8.00503329 280.52032288   0.07164047
 
 ![](CRC_point_process_files/figure-markdown_strict/plot%20void-1.png)
 
@@ -92,10 +91,9 @@ CRC data
 ========
 
 This section discusses fitting models to the colorectal cancer (CRC)
-data discussed in Jones-Todd et al. (In submission). Please note that
-the CRC data cannot be supplied however to illustrate the methods in
-Jones-Todd et al. (In submission) we simulate data from a Thomas point
-process model.
+data discussed in Jones-Todd et al. (2018). Please note that the CRC
+data cannot be supplied however to illustrate the methods in Jones-Todd
+et al. (2018) we simulate data from a Thomas point process model.
 
 ![Illustration of one image of a patient's slide which enables the
 pinpointing of nuclei. Plot i) is a composite immunofluorescence digital
@@ -104,7 +102,7 @@ highlights all nuclei in the image). Plot ii) is an image analysis mask
 overlay from automatic machine learnt segmentation of the digital image:
 Plot iii) is the point pattern formed by the nuclei of the tumour
 (black) and stroma (grey) cells shown in the previous two
-images.](CRC_point_process_files/figure-markdown_strict/cancer.png)
+images.](../CRC_point_process_files/figure-markdown_strict/image.pdf)
 
 The **palm** functions **fit.ns()** and **fit.void()** can also take
 lists for and **lims** arquments. This allows us to estimate parameters
@@ -165,13 +163,13 @@ and illustrate fitting a Thomas process to the data.
     coef(fit.one)
 
     ##          D     lambda      sigma 
-    ## 7.95941948 6.80545183 0.04658544
+    ## 7.95838999 6.80621184 0.04658654
 
     fit.two <- fit.ns(points = sim.points.two, lims = lims, R = 0.5)
     coef(fit.two)
 
     ##          D     lambda      sigma 
-    ## 9.66838370 3.57232273 0.09250772
+    ## 9.66838372 3.57232273 0.09250772
 
     ## plot Palm intensity for all patterns
     plot(fit.one)
@@ -186,9 +184,9 @@ References
 ==========
 
 Jones-Todd, C. M, P Caie, J Illian, B. C Stevenson, A Savage, D
-Harrison, and J Bown. In submission. “Identifying Unusual Structures
-Inherent in Point Pattern Data and Its Application in Predicting Cancer
-Patient Survival.”
+Harrison, and J Bown. 2018. “Identifying Unusual Structures Inherent in
+Point Pattern Data and Its Application in Predicting Cancer Patient
+Survival.” *Statistics in Medicine* DOI:10.10002/sim.8046.
 
 Stevenson, B. C. 2017. *Palm: Fitting Point Process Models Using the
 Palm Likelihood*. <https://github.com/b-steve/palm>.
